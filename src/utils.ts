@@ -1,0 +1,216 @@
+import type {
+  LightForm,
+  LightReaction,
+  LightType,
+  OrbitParams,
+  RelationshipKind,
+  UnlockTrigger,
+} from "./types";
+
+export const uid = (): string =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+
+// Warm, hopeful palette — golds, soft purples, gentle blues. Never clinical.
+const BODY_COLORS = [
+  "#ffd27a", // warm gold
+  "#f7b267", // amber
+  "#c8a2ff", // soft violet
+  "#9bb8ff", // gentle blue
+  "#ff9ecd", // rose
+  "#8be8d8", // aqua
+  "#ffc4a3", // peach
+];
+
+// People closer to the heart tend to orbit nearer the center.
+const RELATIONSHIP_INTIMACY: Record<string, number> = {
+  Partner: 0.9,
+  Mother: 0.85,
+  Father: 0.85,
+  Child: 0.85,
+  Sister: 0.7,
+  Brother: 0.7,
+  Friend: 0.55,
+  Mentor: 0.5,
+  Other: 0.45,
+};
+
+// Deterministic-ish but varied orbit so every relationship has its own place.
+export function makeOrbit(
+  relationship: string,
+  index: number,
+): OrbitParams {
+  const intimacy = RELATIONSHIP_INTIMACY[relationship] ?? 0.5;
+  // Nearer for intimate relationships, with spacing so bodies don't overlap.
+  const baseRadius = 6 + (1 - intimacy) * 7;
+  const radius = baseRadius + index * 2.2 + Math.random() * 1.5;
+  return {
+    radius,
+    speed: (0.04 + Math.random() * 0.05) * (Math.random() > 0.5 ? 1 : -1),
+    phase: Math.random() * Math.PI * 2,
+    inclination: (Math.random() - 0.5) * 0.6,
+    size: 0.7 + intimacy * 0.6,
+    color: BODY_COLORS[index % BODY_COLORS.length],
+  };
+}
+
+// Position of an orbiting body at a given time, including a gentle tilt.
+export function orbitPosition(
+  orbit: OrbitParams,
+  t: number,
+): [number, number, number] {
+  const angle = orbit.phase + t * orbit.speed;
+  const x = Math.cos(angle) * orbit.radius;
+  const z = Math.sin(angle) * orbit.radius;
+  const y = Math.sin(angle) * orbit.radius * Math.sin(orbit.inclination);
+  return [x, y, z];
+}
+
+export function relationshipColor(kind: RelationshipKind): string {
+  return RELATIONSHIP_INTIMACY[kind] !== undefined
+    ? BODY_COLORS[Math.floor(RELATIONSHIP_INTIMACY[kind] * BODY_COLORS.length) % BODY_COLORS.length]
+    : "#ffd27a";
+}
+
+// Read a File into a data URL (photos, voice notes).
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── Phase 2: Light visuals & orbits ────────────────────────────────────────
+
+// Each light type carries its own colour and form so the universe reads at a
+// glance — without a single label.
+const LIGHT_COLORS: Record<LightType, string> = {
+  text: "#ffd27a", // a warm note
+  voice: "#8be8d8", // a voice, alive and shimmering
+  photo: "#9bb8ff", // a remembered image
+  future: "#c8a2ff", // a sealed capsule waiting for its moment
+};
+
+const LIGHT_FORMS: Record<LightType, LightForm> = {
+  text: "orb",
+  voice: "firefly",
+  photo: "fragment",
+  future: "lantern",
+};
+
+export function lightColor(type: LightType): string {
+  return LIGHT_COLORS[type];
+}
+
+export function lightForm(type: LightType): LightForm {
+  return LIGHT_FORMS[type];
+}
+
+// Deterministic hash of an id → orbit params, so a light always returns to the
+// same place around the star (and the camera can find it to focus).
+function hashId(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295; // 0..1
+}
+
+// Stable 0..1 value from an id — used to give each planet its own type & seed.
+export function seedFrom(id: string): number {
+  return hashId(id);
+}
+
+// A stable home for each citizen's solar system, scattered across a galactic
+// disk so systems never overlap and the galaxy feels vast. Deterministic from
+// the owner id, so a person is always in the same place for everyone.
+export function galaxyPosition(ownerId: string): [number, number, number] {
+  const h1 = hashId(ownerId);
+  const h2 = hashId(ownerId + "::y");
+  const h3 = hashId(ownerId + "::a");
+  // Golden-angle spiral keeps systems evenly spread; radius grows outward but
+  // stays well inside the starfield so the sky always reads as background.
+  const ring = Math.floor(h1 * 6); // 0..5 rough distance bands
+  const radius = 34 + ring * 26 + h2 * 18;
+  const angle = h3 * Math.PI * 2 + ring * 2.399963; // golden angle per ring
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const y = (h2 - 0.5) * 26; // gentle vertical scatter
+  return [x, y, z];
+}
+
+export interface LightOrbit {
+  radius: number;
+  speed: number;
+  phase: number;
+  inclination: number;
+}
+
+// Lights pool in a soft shell around the user's star — near enough to feel
+// present, far enough to surround. Sealed capsules drift a little further out.
+export function lightOrbit(
+  id: string,
+  base: number,
+  sealed: boolean,
+): LightOrbit {
+  const h = hashId(id);
+  const h2 = hashId(id + "~");
+  const radius = (sealed ? 13 : 7.5) + h * 6 + (sealed ? 2 : 0);
+  return {
+    radius,
+    speed: (0.03 + h2 * 0.04) * (h > 0.5 ? 1 : -1),
+    phase: base * Math.PI * 2 + h2 * 0.6,
+    inclination: (h2 - 0.5) * 1.1,
+  };
+}
+
+export function lightPosition(
+  o: LightOrbit,
+  t: number,
+): [number, number, number] {
+  const a = o.phase + t * o.speed;
+  const x = Math.cos(a) * o.radius;
+  const z = Math.sin(a) * o.radius;
+  const y = Math.sin(a) * o.radius * Math.sin(o.inclination);
+  return [x, y, z];
+}
+
+export const REACTION_LABELS: Record<LightReaction, string> = {
+  thank_you: "Thank you",
+  this_helped: "This helped",
+  saved_for_later: "Saved for later",
+};
+
+export const UNLOCK_LABELS: Record<UnlockTrigger, string> = {
+  scared: "When you feel scared",
+  lonely: "When you feel lonely",
+  motivation: "When you need motivation",
+  birthday: "On your birthday",
+  treatment_complete: "When treatment is complete",
+  one_year: "One year from now",
+};
+
+// Emotions the user can summon support for; occasions arrive in life.
+export const FEELING_TRIGGERS: UnlockTrigger[] = ["scared", "lonely", "motivation"];
+export const OCCASION_TRIGGERS: UnlockTrigger[] = ["birthday", "treatment_complete"];
+
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+// A sealed light is openable when its time has come (one_year) or when the user
+// summons the moment it was kept for (emotions/occasions, via the door).
+export function unlockTimeFor(trigger: UnlockTrigger, from: number): number | undefined {
+  return trigger === "one_year" ? from + YEAR_MS : undefined;
+}
+
+export function formatDate(value?: string | number): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
