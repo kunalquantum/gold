@@ -28,6 +28,11 @@ export interface UniverseRepository {
   // offset: row offset for pagination (default 0). The caller keeps fetching
   // with increasing offsets until a page shorter than WORLD_PAGE_SIZE is returned.
   loadWorld(offset?: number): Promise<Citizen[]>;
+
+  // Fetch specific citizens by owner ID — used to guarantee that orbited
+  // citizens appear immediately regardless of their position in the activity ranking.
+  loadCitizensByIds(ids: string[]): Promise<Citizen[]>;
+
   subscribeWorld(callbacks: WorldCallbacks): () => void;
 }
 
