@@ -17,6 +17,16 @@ import { CreateDreamModal } from "./ui/CreateDreamModal";
 import { DreamPanel } from "./ui/DreamPanel";
 import { StarsAheadPanel } from "./ui/StarsAheadPanel";
 
+// Positions items in a quarter-circle arc: straight up → pure left (from FAB at bottom-right)
+function getOrbPos(index: number, total: number) {
+  const r = 96;
+  const startDeg = 90; // math 90° = up
+  const spread = total > 1 ? Math.min((total - 1) * 15, 90) : 0;
+  const deg = startDeg + (total > 1 ? (spread / (total - 1)) * index : 0);
+  const rad = (deg * Math.PI) / 180;
+  return { x: Math.round(r * Math.cos(rad)), y: -Math.round(r * Math.sin(rad)) };
+}
+
 export default function App() {
   const loaded = useUniverseStore((s) => s.loaded);
   const user = useUniverseStore((s) => s.user);
@@ -74,6 +84,24 @@ export default function App() {
     c.milestones.length > 0
   ));
 
+  const fabItems = useMemo(() => {
+    if (!user) return [];
+    type Orb = { key: string; icon: string; label: string; badge?: number; accent?: "purple" | "gold"; action: () => void };
+    const items: Orb[] = [];
+    if (hasWaitingLight)
+      items.push({ key: "door", icon: "✦", label: "When you need it", accent: "purple", action: () => openOverlay({ kind: "feelingDoor" }) });
+    items.push({ key: "cosmos", icon: "✺", label: "The Cosmos", badge: population > 1 ? population : undefined, action: () => openOverlay({ kind: "community" }) });
+    if (hasStarsAhead)
+      items.push({ key: "stars", icon: "✦", label: "Stars Ahead", action: () => openOverlay({ kind: "starsAhead" }) });
+    if (isSurvivor || milestonesCount > 0 || user.role === "patient")
+      items.push({ key: "milestone", icon: "★", label: milestonesCount > 0 ? `${milestonesCount} milestone${milestonesCount === 1 ? "" : "s"}` : "Mark a moment", action: () => openOverlay({ kind: "milestone" }) });
+    items.push({ key: "nebula", icon: "☁", label: nebulasCount > 0 ? `${nebulasCount} nebula${nebulasCount === 1 ? "" : "s"}` : "New memory", action: () => openOverlay({ kind: "createNebula" }) });
+    items.push({ key: "dream", icon: "✦", label: dreamsCount > 0 ? `${dreamsCount} dream${dreamsCount === 1 ? "" : "s"}` : "New dream", action: () => openOverlay({ kind: "createDream" }) });
+    items.push({ key: "add", icon: "+", label: "Add someone", accent: "gold", action: () => openOverlay({ kind: "addPerson" }) });
+    return items;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, hasWaitingLight, population, hasStarsAhead, isSurvivor, milestonesCount, nebulasCount, dreamsCount]);
+
   // Auth gate: show auth screen when Supabase is configured but no session exists.
   if (authStatus === "needsAuth") {
     return <AuthScreen />;
@@ -125,123 +153,57 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating action button — bottom right */}
+      {/* Radial orb fan — bottom right */}
       {user && overlay.kind !== "onboarding" && (
-        <div className="universe-fab">
+        <>
           {fabOpen && !exploring && (
-            <div className="universe-fab__backdrop" onClick={() => setFabOpen(false)} />
+            <div
+              style={{ position: "fixed", inset: 0, zIndex: 19 }}
+              onClick={() => setFabOpen(false)}
+            />
           )}
 
-          <AnimatePresence>
-            {fabOpen && !exploring && (
-              <motion.div
-                className="universe-fab__menu"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                {hasWaitingLight && (
-                  <motion.button
-                    className="fab-item fab-item--purple"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.0 } }}
-                    exit={{ opacity: 0, y: 4 }}
-                    onClick={() => { openOverlay({ kind: "feelingDoor" }); setFabOpen(false); }}
-                  >
-                    <span className="fab-item__icon">✦</span>
-                    When you need it
-                  </motion.button>
-                )}
+          <div className="universe-fab">
+            {exploring ? (
+              <button className="universe-fab__return" onClick={() => selectCitizen(selfId)}>
+                ← Return home
+              </button>
+            ) : (
+              <div className="universe-fab__field">
+                <AnimatePresence>
+                  {fabOpen && fabItems.map((item, i) => {
+                    const { x, y } = getOrbPos(i, fabItems.length);
+                    return (
+                      <motion.button
+                        key={item.key}
+                        className={`fab-orb${item.accent ? ` fab-orb--${item.accent}` : ""}`}
+                        initial={{ x: 0, y: 0, opacity: 0, scale: 0.15 }}
+                        animate={{ x, y, opacity: 1, scale: 1, transition: { delay: i * 0.04, type: "spring", stiffness: 290, damping: 22 } }}
+                        exit={{ x: 0, y: 0, opacity: 0, scale: 0.1, transition: { delay: (fabItems.length - 1 - i) * 0.025, duration: 0.16 } }}
+                        onClick={() => { item.action(); setFabOpen(false); }}
+                        title={item.label + (item.badge !== undefined ? ` · ${item.badge}` : "")}
+                      >
+                        <span className="fab-orb__glyph">{item.icon}</span>
+                        <span className="fab-orb__label">
+                          {item.label}
+                          {item.badge !== undefined && <span className="fab-orb__badge">{item.badge}</span>}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
 
-                <motion.button
-                  className="fab-item"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: hasWaitingLight ? 0.04 : 0.0 } }}
-                  exit={{ opacity: 0, y: 4 }}
-                  onClick={() => { openOverlay({ kind: "community" }); setFabOpen(false); }}
+                <button
+                  className={`universe-fab__btn${fabOpen ? " universe-fab__btn--open" : ""}`}
+                  onClick={() => setFabOpen((v) => !v)}
+                  aria-label={fabOpen ? "Close" : "Open menu"}
                 >
-                  <span className="fab-item__icon">✺</span>
-                  The Cosmos
-                  {population > 1 && <span className="fab-item__badge">{population}</span>}
-                </motion.button>
-
-                {hasStarsAhead && (
-                  <motion.button
-                    className="fab-item"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
-                    exit={{ opacity: 0, y: 4 }}
-                    onClick={() => { openOverlay({ kind: "starsAhead" }); setFabOpen(false); }}
-                  >
-                    <span className="fab-item__icon">✨</span>
-                    Stars Ahead
-                  </motion.button>
-                )}
-
-                {(isSurvivor || milestonesCount > 0 || user.role === "patient") && (
-                  <motion.button
-                    className="fab-item"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.12 } }}
-                    exit={{ opacity: 0, y: 4 }}
-                    onClick={() => { openOverlay({ kind: "milestone" }); setFabOpen(false); }}
-                  >
-                    <span className="fab-item__icon">★</span>
-                    {milestonesCount > 0 ? `${milestonesCount} Milestone${milestonesCount === 1 ? "" : "s"}` : "Mark a moment"}
-                  </motion.button>
-                )}
-
-                <motion.button
-                  className="fab-item"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
-                  exit={{ opacity: 0, y: 4 }}
-                  onClick={() => { openOverlay({ kind: "createNebula" }); setFabOpen(false); }}
-                >
-                  <span className="fab-item__icon">☁</span>
-                  {nebulasCount > 0 ? `${nebulasCount} Nebula${nebulasCount === 1 ? "" : "s"}` : "New Memory"}
-                </motion.button>
-
-                <motion.button
-                  className="fab-item"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.20 } }}
-                  exit={{ opacity: 0, y: 4 }}
-                  onClick={() => { openOverlay({ kind: "createDream" }); setFabOpen(false); }}
-                >
-                  <span className="fab-item__icon">✦</span>
-                  {dreamsCount > 0 ? `${dreamsCount} Dream${dreamsCount === 1 ? "" : "s"}` : "New Dream"}
-                </motion.button>
-
-                <motion.button
-                  className="fab-item fab-item--gold"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.24 } }}
-                  exit={{ opacity: 0, y: 4 }}
-                  onClick={() => { openOverlay({ kind: "addPerson" }); setFabOpen(false); }}
-                >
-                  <span className="fab-item__icon">+</span>
-                  Add someone
-                </motion.button>
-              </motion.div>
+                  <span className="universe-fab__glyph">✦</span>
+                </button>
+              </div>
             )}
-          </AnimatePresence>
-
-          {exploring ? (
-            <button className="universe-fab__return" onClick={() => selectCitizen(selfId)}>
-              ← Return home
-            </button>
-          ) : (
-            <button
-              className={`universe-fab__btn${fabOpen ? " universe-fab__btn--open" : ""}`}
-              onClick={() => setFabOpen((v) => !v)}
-              aria-label={fabOpen ? "Close menu" : "Open menu"}
-            >
-              <span className="universe-fab__glyph">{fabOpen ? "✕" : "✦"}</span>
-            </button>
-          )}
-        </div>
+          </div>
+        </>
       )}
 
       <AnimatePresence>
