@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUniverseStore } from "./store/useUniverseStore";
 import { useAuthStore } from "./data/auth";
@@ -36,6 +36,8 @@ export default function App() {
   const userEmail = useAuthStore((s) => s.userEmail);
   const initialize = useAuthStore((s) => s.initialize);
   const signOut = useAuthStore((s) => s.signOut);
+
+  const [fabOpen, setFabOpen] = useState(false);
 
   // Auth resolves first; universe loads only once we know who the user is.
   useEffect(() => {
@@ -120,81 +122,125 @@ export default function App() {
               </>
             )}
           </div>
+        </div>
+      )}
 
-          <div className="hud__actions">
-            {exploring ? (
-              <button className="add-btn" onClick={() => selectCitizen(selfId)}>
-                ← Return home
-              </button>
-            ) : (
-              <>
+      {/* Floating action button — bottom right */}
+      {user && overlay.kind !== "onboarding" && (
+        <div className="universe-fab">
+          {fabOpen && !exploring && (
+            <div className="universe-fab__backdrop" onClick={() => setFabOpen(false)} />
+          )}
+
+          <AnimatePresence>
+            {fabOpen && !exploring && (
+              <motion.div
+                className="universe-fab__menu"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
                 {hasWaitingLight && (
-                  <button
-                    className="door-btn"
-                    onClick={() => openOverlay({ kind: "feelingDoor" })}
-                    title="Open a light kept for when you need it"
+                  <motion.button
+                    className="fab-item fab-item--purple"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.0 } }}
+                    exit={{ opacity: 0, y: 4 }}
+                    onClick={() => { openOverlay({ kind: "feelingDoor" }); setFabOpen(false); }}
                   >
-                    <span className="door-btn__glint">✦</span>
+                    <span className="fab-item__icon">✦</span>
                     When you need it
-                  </button>
+                  </motion.button>
                 )}
 
-                <button
-                  className="cosmos-btn"
-                  onClick={() => openOverlay({ kind: "community" })}
-                  title="See the community cosmos"
+                <motion.button
+                  className="fab-item"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: hasWaitingLight ? 0.04 : 0.0 } }}
+                  exit={{ opacity: 0, y: 4 }}
+                  onClick={() => { openOverlay({ kind: "community" }); setFabOpen(false); }}
                 >
-                  <span className="cosmos-btn__glyph">✺</span>
+                  <span className="fab-item__icon">✺</span>
                   The Cosmos
-                  {population > 1 && <span className="cosmos-btn__count">{population}</span>}
-                </button>
+                  {population > 1 && <span className="fab-item__badge">{population}</span>}
+                </motion.button>
 
                 {hasStarsAhead && (
-                  <button
-                    className="stars-ahead-btn"
-                    onClick={() => openOverlay({ kind: "starsAhead" })}
-                    title="See people who walked this path before you"
+                  <motion.button
+                    className="fab-item"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
+                    exit={{ opacity: 0, y: 4 }}
+                    onClick={() => { openOverlay({ kind: "starsAhead" }); setFabOpen(false); }}
                   >
-                    <span className="stars-ahead-btn__glyph">✨</span>
+                    <span className="fab-item__icon">✨</span>
                     Stars Ahead
-                  </button>
+                  </motion.button>
                 )}
 
                 {(isSurvivor || milestonesCount > 0 || user.role === "patient") && (
-                  <button
-                    className="milestone-hud-btn"
-                    onClick={() => openOverlay({ kind: "milestone" })}
-                    title="Mark a milestone"
+                  <motion.button
+                    className="fab-item"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.12 } }}
+                    exit={{ opacity: 0, y: 4 }}
+                    onClick={() => { openOverlay({ kind: "milestone" }); setFabOpen(false); }}
                   >
-                    {milestonesCount > 0 ? `★ ${milestonesCount}` : "★ Mark a moment"}
-                  </button>
+                    <span className="fab-item__icon">★</span>
+                    {milestonesCount > 0 ? `${milestonesCount} Milestone${milestonesCount === 1 ? "" : "s"}` : "Mark a moment"}
+                  </motion.button>
                 )}
 
-                <button
-                  className="nebula-hud-btn"
-                  onClick={() => openOverlay({ kind: "createNebula" })}
-                  title="Create a memory place"
+                <motion.button
+                  className="fab-item"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
+                  exit={{ opacity: 0, y: 4 }}
+                  onClick={() => { openOverlay({ kind: "createNebula" }); setFabOpen(false); }}
                 >
-                  <span className="nebula-hud-btn__glyph">☁</span>
+                  <span className="fab-item__icon">☁</span>
                   {nebulasCount > 0 ? `${nebulasCount} Nebula${nebulasCount === 1 ? "" : "s"}` : "New Memory"}
-                </button>
+                </motion.button>
 
-                <button
-                  className="dream-hud-btn"
-                  onClick={() => openOverlay({ kind: "createDream" })}
-                  title="Add a dream to your sky"
+                <motion.button
+                  className="fab-item"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.20 } }}
+                  exit={{ opacity: 0, y: 4 }}
+                  onClick={() => { openOverlay({ kind: "createDream" }); setFabOpen(false); }}
                 >
-                  <span className="dream-hud-btn__glyph">✨</span>
+                  <span className="fab-item__icon">✦</span>
                   {dreamsCount > 0 ? `${dreamsCount} Dream${dreamsCount === 1 ? "" : "s"}` : "New Dream"}
-                </button>
+                </motion.button>
 
-                <button className="add-btn" onClick={() => openOverlay({ kind: "addPerson" })} title="Add someone">
-                  <span>+</span>
+                <motion.button
+                  className="fab-item fab-item--gold"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.24 } }}
+                  exit={{ opacity: 0, y: 4 }}
+                  onClick={() => { openOverlay({ kind: "addPerson" }); setFabOpen(false); }}
+                >
+                  <span className="fab-item__icon">+</span>
                   Add someone
-                </button>
-              </>
+                </motion.button>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
+
+          {exploring ? (
+            <button className="universe-fab__return" onClick={() => selectCitizen(selfId)}>
+              ← Return home
+            </button>
+          ) : (
+            <button
+              className={`universe-fab__btn${fabOpen ? " universe-fab__btn--open" : ""}`}
+              onClick={() => setFabOpen((v) => !v)}
+              aria-label={fabOpen ? "Close menu" : "Open menu"}
+            >
+              <span className="universe-fab__glyph">{fabOpen ? "✕" : "✦"}</span>
+            </button>
+          )}
         </div>
       )}
 
