@@ -6,6 +6,7 @@ import { StarBody } from "./StarBody";
 import { PersonBody } from "./PersonBody";
 import { SystemLights } from "./LightField";
 import { NebulaMesh } from "./NebulaMesh";
+import { useShallow } from "zustand/react/shallow";
 
 interface Props {
   citizen: Citizen;
@@ -30,6 +31,7 @@ export function System({
   onEnterNebula,
 }: Props) {
   const focusedPersonId = useUniverseStore((s) => s.focusedPersonId);
+  const others = useUniverseStore(useShallow((s) => s.others));
   const pos = useMemo(() => galaxyPosition(citizen.ownerId), [citizen.ownerId]);
   const dimmed = anySelection && !selected;
   const showLights = selected || isSelf;
@@ -64,15 +66,21 @@ export function System({
       )}
 
       {/* Memory nebulas float near this citizen's star */}
-      {citizen.nebulas.map((nebula) => (
-        <NebulaMesh
-          key={nebula.id}
-          nebula={nebula}
-          ownerPos={pos}
-          artifactCount={citizen.artifacts.filter((a) => a.nebulaId === nebula.id).length}
-          onEnter={onEnterNebula}
-        />
-      ))}
+      {citizen.nebulas.map((nebula) => {
+        const sharedFromName = nebula.sharedFromId
+          ? others.find((c) => c.ownerId === nebula.sharedFromId)?.user.name
+          : undefined;
+        return (
+          <NebulaMesh
+            key={nebula.id}
+            nebula={nebula}
+            ownerPos={pos}
+            artifactCount={citizen.artifacts.filter((a) => a.nebulaId === nebula.id).length}
+            onEnter={onEnterNebula}
+            sharedFromName={sharedFromName}
+          />
+        );
+      })}
     </group>
   );
 }

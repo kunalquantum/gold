@@ -41,6 +41,9 @@ export interface MemoryNebula {
   createdAt: number;
   echoCount: number;
   participantIds: string[]; // other ownerIds who co-own this memory place
+  // Runtime-only — set when this nebula was injected from another citizen's universe.
+  // Never persisted.
+  sharedFromId?: string;
 }
 
 export interface MemoryArtifact {

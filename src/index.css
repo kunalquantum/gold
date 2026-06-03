@@ -1522,19 +1522,21 @@ canvas {
 /* Nebula in-universe label */
 .nebula-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 18px;
   background: rgba(8, 10, 24, 0.55);
   border: 1px solid var(--line);
   backdrop-filter: blur(6px);
-  white-space: nowrap;
   font-family: var(--display);
   font-size: 15px;
   color: var(--ink-soft);
   user-select: none;
   transition: border-color 0.4s, color 0.4s;
+  max-width: 180px;
+  text-align: center;
 }
 .nebula-label--hover {
   color: var(--ink);
@@ -1553,6 +1555,20 @@ canvas {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink-faint);
+}
+.nebula-label--shared {
+  border-color: rgba(200, 162, 255, 0.3);
+}
+.nebula-label__shared {
+  display: block;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: rgba(200, 162, 255, 0.6);
+  margin-top: -4px;
+  text-align: center;
 }
 
 /* Artifact in-nebula label */
@@ -1617,6 +1633,9 @@ canvas {
 }
 .nebula-interior__nav {
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .nebula-interior__back {
   pointer-events: auto;
@@ -1637,9 +1656,33 @@ canvas {
 }
 .nebula-interior__title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin-top: 4px;
+}
+.nebula-interior__shared-by {
+  font-size: 11px;
+  color: rgba(200, 162, 255, 0.65);
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+  text-shadow: 0 0 14px rgba(200, 162, 255, 0.4);
+}
+.nebula-interior__share-btn {
+  pointer-events: auto;
+  background: rgba(22, 16, 44, 0.55);
+  border: 1px solid rgba(200, 162, 255, 0.3);
+  backdrop-filter: blur(10px);
+  color: var(--purple);
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.3s, border-color 0.3s;
+}
+.nebula-interior__share-btn:hover {
+  color: #dbb8ff;
+  border-color: rgba(200, 162, 255, 0.6);
 }
 .nebula-interior__glyph {
   font-size: 22px;
@@ -1857,6 +1900,81 @@ canvas {
   text-transform: uppercase;
   color: var(--ink-faint);
   margin-bottom: 6px;
+}
+
+/* ---------- Share Nebula Modal ---------- */
+.share-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.share-modal__citizen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.4);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+}
+.share-modal__citizen:hover {
+  border-color: rgba(200, 162, 255, 0.35);
+  background: rgba(22, 16, 44, 0.5);
+}
+.share-modal__citizen--selected {
+  border-color: rgba(200, 162, 255, 0.6);
+  background: rgba(200, 162, 255, 0.08);
+}
+.share-modal__dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.share-modal__name {
+  flex: 1;
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.share-modal__role {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.share-modal__check {
+  font-size: 14px;
+  color: var(--purple);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.share-modal__empty {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 24px 0;
+  line-height: 1.6;
+}
+.share-modal__already {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 6px;
 }
 
 /* ---------- Scrollbars ---------- */

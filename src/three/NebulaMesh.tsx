@@ -10,6 +10,7 @@ interface Props {
   ownerPos: [number, number, number];
   artifactCount: number;
   onEnter: (nebulaId: string) => void;
+  sharedFromName?: string;
 }
 
 function makeCloudTexture(): THREE.Texture {
@@ -28,7 +29,7 @@ function makeCloudTexture(): THREE.Texture {
   return tex;
 }
 
-export function NebulaMesh({ nebula, ownerPos, artifactCount, onEnter }: Props) {
+export function NebulaMesh({ nebula, ownerPos, artifactCount, onEnter, sharedFromName }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const outerRef = useRef<THREE.Mesh>(null);
   const innerRef = useRef<THREE.Mesh>(null);
@@ -133,13 +134,16 @@ export function NebulaMesh({ nebula, ownerPos, artifactCount, onEnter }: Props) 
       </mesh>
 
       <Html center distanceFactor={55} position={[0, -13, 0]} pointerEvents="none">
-        <div className={`nebula-label ${hovered ? "nebula-label--hover" : ""}`}>
+        <div className={`nebula-label ${hovered ? "nebula-label--hover" : ""} ${sharedFromName ? "nebula-label--shared" : ""}`}>
           <span className="nebula-label__glyph" style={{ color: palette.primary }}>
             {EMOTION_GLYPHS[nebula.emotion]}
           </span>
           <span className="nebula-label__name">{nebula.title}</span>
           {artifactCount > 0 && (
             <span className="nebula-label__count">{artifactCount}</span>
+          )}
+          {sharedFromName && (
+            <span className="nebula-label__shared">✦ from {sharedFromName}</span>
           )}
         </div>
       </Html>

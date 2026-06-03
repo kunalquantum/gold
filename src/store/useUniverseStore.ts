@@ -80,9 +80,10 @@ interface UniverseState extends UniverseData {
   setPrivacy: (isPublic: boolean) => void;
   setRoleAndStage: (updates: Pick<UniverseUser, "role" | "stage">) => void;
 
-  addNebula: (input: Omit<MemoryNebula, "id" | "createdAt" | "echoCount">) => MemoryNebula;
+  addNebula: (input: Omit<MemoryNebula, "id" | "createdAt" | "echoCount" | "sharedFromId">) => MemoryNebula;
   addArtifact: (input: Omit<MemoryArtifact, "id" | "createdAt">) => MemoryArtifact;
   echoNebula: (nebulaId: string) => void;
+  addParticipantToNebula: (nebulaId: string, participantId: string) => void;
 
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
@@ -300,6 +301,17 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     set((s) => ({
       nebulas: s.nebulas.map((n) =>
         n.id === nebulaId ? { ...n, echoCount: n.echoCount + 1 } : n,
+      ),
+    }));
+    persist(get);
+  },
+
+  addParticipantToNebula: (nebulaId, participantId) => {
+    set((s) => ({
+      nebulas: s.nebulas.map((n) =>
+        n.id === nebulaId && !n.participantIds.includes(participantId)
+          ? { ...n, participantIds: [...n.participantIds, participantId] }
+          : n,
       ),
     }));
     persist(get);

@@ -10,6 +10,7 @@ import { EMOTION_PALETTES, EMOTION_GLYPHS } from "../utils";
 import { ArtifactObject } from "./ArtifactObject";
 import { CreateArtifactModal } from "../ui/CreateArtifactModal";
 import { ArtifactViewer } from "../ui/ArtifactViewer";
+import { ShareNebulaModal } from "../ui/ShareNebulaModal";
 
 // Dense animated particle cloud that fills the nebula interior.
 function NebulaCloud({ emotion }: { emotion: MemoryNebula["emotion"] }) {
@@ -135,16 +136,30 @@ interface Props {
 
 export function NebulaInterior({ nebulaId }: Props) {
   const closeOverlay = useUniverseStore((s) => s.closeOverlay);
-  const nebulas = useUniverseStore((s) => s.nebulas);
-  const artifacts = useUniverseStore((s) => s.artifacts);
   const selfId = useUniverseStore((s) => s.selfId);
-  const isSelf = useUniverseStore((s) => s.selfId) === selfId;
+  const world = useUniverseStore((s) => s.world)();
 
-  const nebula = nebulas.find((n) => n.id === nebulaId);
-  const nebulaArtifacts = artifacts.filter((a) => a.nebulaId === nebulaId);
+  // Search the full world for the nebula so shared nebulas work correctly.
+  const ownerCitizen = useMemo(
+    () => world.find((c) => c.nebulas.some((n) => n.id === nebulaId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nebulaId, world],
+  );
+  const nebula = ownerCitizen?.nebulas.find((n) => n.id === nebulaId) ?? null;
+  const isOwner = ownerCitizen?.ownerId === selfId;
+  const isParticipant = !isOwner && (nebula?.participantIds.includes(selfId) ?? false);
+  const ownerName = !isOwner ? ownerCitizen?.user.name : undefined;
+
+  // Collect artifacts from ALL world citizens for this nebula (owner + participants all contribute).
+  const nebulaArtifacts = useMemo(
+    () => world.flatMap((c) => c.artifacts.filter((a) => a.nebulaId === nebulaId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nebulaId, world],
+  );
 
   const [activeArtifact, setActiveArtifact] = useState<MemoryArtifact | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   if (!nebula) return null;
 
@@ -177,13 +192,28 @@ export function NebulaInterior({ nebulaId }: Props) {
           <button className="nebula-interior__back" onClick={closeOverlay}>
             ← Leave this place
           </button>
+          {isOwner && (
+            <button className="nebula-interior__share-btn" onClick={() => setShowShare(true)}>
+              ✦ Share this place
+            </button>
+          )}
         </div>
 
         <div className="nebula-interior__title-row">
           <span className="nebula-interior__glyph" style={{ color: palette.primary }}>
             {EMOTION_GLYPHS[nebula.emotion]}
           </span>
-          <h2 className="nebula-interior__title">{nebula.title}</h2>
+          <div>
+            <h2 className="nebula-interior__title">{nebula.title}</h2>
+            {isParticipant && ownerName && (
+              <p className="nebula-interior__shared-by">✦ shared by {ownerName}</p>
+            )}
+            {isOwner && nebula.participantIds.length > 0 && (
+              <p className="nebula-interior__shared-by">
+                shared with {nebula.participantIds.length} {nebula.participantIds.length === 1 ? "person" : "people"}
+              </p>
+            )}
+          </div>
         </div>
 
         {nebulaArtifacts.length === 0 && (
@@ -216,6 +246,13 @@ export function NebulaInterior({ nebulaId }: Props) {
             artifact={activeArtifact}
             nebula={nebula}
             onClose={() => setActiveArtifact(null)}
+          />
+        )}
+        {showShare && (
+          <ShareNebulaModal
+            key="share"
+            nebula={nebula}
+            onClose={() => setShowShare(false)}
           />
         )}
       </AnimatePresence>

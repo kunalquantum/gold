@@ -106,12 +106,37 @@ export function UniverseScene() {
     openOverlay({ kind: "nebulaInterior", nebulaId });
   };
 
-  // Build the rendered world: your live self plus every other citizen.
+  // Build the rendered world: your live self plus every other citizen, with shared
+  // nebulas injected into each participant citizen so they appear near their star.
   const world = useMemo<Citizen[]>(() => {
     const self: Citizen | null = user?.name
       ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts }
       : null;
-    return self ? [self, ...others] : others;
+    const raw = self ? [self, ...others] : others;
+
+    return raw.map((citizen) => {
+      const sharedNebulas = raw
+        .filter((other) => other.ownerId !== citizen.ownerId)
+        .flatMap((other) =>
+          other.nebulas
+            .filter((n) => n.participantIds.includes(citizen.ownerId))
+            .map((n) => ({ ...n, sharedFromId: other.ownerId })),
+        );
+      if (sharedNebulas.length === 0) return citizen;
+
+      // Pull in artifacts that belong to these shared nebulas from their owners
+      const sharedIds = new Set(sharedNebulas.map((n) => n.id));
+      const extraArtifacts = raw.flatMap((other) =>
+        other.ownerId !== citizen.ownerId
+          ? other.artifacts.filter((a) => sharedIds.has(a.nebulaId))
+          : [],
+      );
+      return {
+        ...citizen,
+        nebulas: [...citizen.nebulas, ...sharedNebulas],
+        artifacts: [...citizen.artifacts, ...extraArtifacts],
+      };
+    });
   }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, others]);
 
   const anySelection = world.length > 1;
