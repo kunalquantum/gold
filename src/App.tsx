@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUniverseStore } from "./store/useUniverseStore";
+import { useAuthStore } from "./data/auth";
+import { AuthScreen } from "./ui/AuthScreen";
 import { UniverseScene } from "./three/UniverseScene";
 import { Onboarding } from "./ui/Onboarding";
 import { AddPersonModal } from "./ui/AddPersonModal";
@@ -27,9 +29,21 @@ export default function App() {
   const openOverlay = useUniverseStore((s) => s.openOverlay);
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
 
+  const authStatus = useAuthStore((s) => s.status);
+  const userEmail = useAuthStore((s) => s.userEmail);
+  const initialize = useAuthStore((s) => s.initialize);
+  const signOut = useAuthStore((s) => s.signOut);
+
+  // Auth resolves first; universe loads only once we know who the user is.
   useEffect(() => {
-    void load();
-  }, [load]);
+    void initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (authStatus === "authenticated" || authStatus === "guest") {
+      void load();
+    }
+  }, [authStatus, load]);
 
   const atHome = selectedCitizenId === selfId;
   const population = others.length + (user?.name ? 1 : 0);
@@ -48,7 +62,12 @@ export default function App() {
   const nebulasCount = useUniverseStore((s) => s.nebulas).length;
   const inNebula = overlay.kind === "nebulaInterior";
 
-  if (!loaded) {
+  // Auth gate: show auth screen when Supabase is configured but no session exists.
+  if (authStatus === "needsAuth") {
+    return <AuthScreen />;
+  }
+
+  if (authStatus === "loading" || !loaded) {
     return <div className="boot" />;
   }
 
@@ -72,6 +91,22 @@ export default function App() {
                     ? `${population} souls share this sky · click any star to visit`
                     : "Drag to look around · add someone you love"}
                 </span>
+                {authStatus === "authenticated" && userEmail && (
+                  <div className="hud__account">
+                    <span className="hud__account-dot" />
+                    <span className="hud__account-email">{userEmail}</span>
+                    <button className="hud__signout" onClick={() => void signOut()}>
+                      Sign out
+                    </button>
+                  </div>
+                )}
+                {authStatus === "guest" && (
+                  <div className="hud__account">
+                    <span className="hud__account-email hud__account-email--guest">
+                      Guest · your universe is local only
+                    </span>
+                  </div>
+                )}
               </>
             )}
           </div>

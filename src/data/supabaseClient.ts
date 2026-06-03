@@ -10,6 +10,10 @@ export const SUPABASE_CONFIGURED = Boolean(url && key);
 // Null when no credentials are present — the app then runs fully local.
 export const supabase: SupabaseClient | null = SUPABASE_CONFIGURED
   ? createClient(url as string, key as string, {
-      auth: { persistSession: false }, // no auth yet; nothing to persist
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: "universe.session",
+      },
     })
   : null;

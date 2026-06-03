@@ -11,7 +11,9 @@ const SAVE_DEBOUNCE_MS = 700;
 //   • your own universe reads/writes locally first, then syncs (debounced)
 //   • the whole world (every citizen) is read from Supabase and kept live
 class SupabaseRepository implements UniverseRepository {
-  private id = ownerId();
+  // Getter so auth changes (setAuthUserId) are picked up without
+  // re-instantiating the repository.
+  private get id() { return ownerId(); }
   private timer: ReturnType<typeof setTimeout> | null = null;
   private pending: UniverseData | null = null;
 
