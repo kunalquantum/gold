@@ -1024,6 +1024,368 @@ canvas {
   line-height: 1.6;
 }
 
+/* ---------- Survivor star label ---------- */
+.star-label--survivor {
+  border-color: rgba(255, 210, 122, 0.55);
+  color: var(--gold-soft);
+}
+.star-label__risen {
+  font-size: 11px;
+  color: var(--gold);
+  text-shadow: 0 0 8px var(--gold);
+}
+
+/* ---------- Onboarding role step ---------- */
+.onboarding--wide {
+  width: min(520px, 92vw);
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.5);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.3s, background 0.3s, transform 0.3s;
+}
+.role-card:hover {
+  border-color: rgba(255, 210, 122, 0.4);
+  transform: translateY(-1px);
+}
+.role-card--active {
+  border-color: var(--gold);
+  background: rgba(255, 210, 122, 0.08);
+}
+.role-card__glyph {
+  font-size: 20px;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.role-card__label {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.role-card__sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-faint);
+}
+
+/* ---------- Privacy toggle ---------- */
+.privacy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.4);
+  margin-bottom: 16px;
+}
+.privacy-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.privacy-row__label {
+  font-size: 14px;
+  color: var(--ink);
+}
+.privacy-row__sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.6);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.3s, border-color 0.3s;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transition: transform 0.3s, background 0.3s;
+}
+.toggle--on {
+  background: rgba(255, 210, 122, 0.2);
+  border-color: rgba(255, 210, 122, 0.55);
+}
+.toggle--on::after {
+  transform: translateX(18px);
+  background: var(--gold);
+}
+
+/* ---------- HUD cosmos / milestone buttons ---------- */
+.cosmos-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 232, 216, 0.35);
+  background: rgba(18, 26, 40, 0.6);
+  color: #8be8d8;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.4s, background 0.4s, transform 0.4s;
+}
+.cosmos-btn:hover {
+  border-color: rgba(139, 232, 216, 0.65);
+  transform: translateY(-1px);
+}
+.cosmos-btn__glyph {
+  font-size: 14px;
+  animation: glint 3s ease-in-out infinite;
+  color: #8be8d8;
+}
+.cosmos-btn__count {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(139, 232, 216, 0.15);
+}
+.milestone-hud-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 122, 0.3);
+  background: rgba(28, 24, 12, 0.55);
+  color: var(--gold-soft);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.4s, transform 0.4s;
+}
+.milestone-hud-btn:hover {
+  border-color: rgba(255, 210, 122, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ---------- Community panel ---------- */
+.community-panel {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.community-panel__header {
+  margin-bottom: 20px;
+  padding-top: 8px;
+}
+.community-panel__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+.community-panel__sub {
+  font-size: 12px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+}
+.community-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+.community-citizen {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.3s;
+}
+.community-citizen--risen {
+  border-color: rgba(255, 210, 122, 0.28);
+  background: rgba(255, 210, 122, 0.04);
+}
+.community-citizen__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.community-citizen__star {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.community-citizen__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.community-citizen__name {
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--ink);
+}
+.community-citizen__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.role-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.stage-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-faint);
+}
+.visit-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.3s, color 0.3s;
+}
+.visit-btn:hover {
+  border-color: rgba(255, 210, 122, 0.4);
+  color: var(--gold-soft);
+}
+.community-citizen__milestone {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.community-citizen__milestone-glyph {
+  color: var(--gold);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.community-citizen__milestone-text {
+  font-size: 13px;
+  color: var(--ink-soft);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.community-citizen__milestone-date {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+.milestone-feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--line);
+}
+.milestone-feed-item__glyph {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.milestone-feed-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.milestone-feed-item__title {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.milestone-feed-item__from {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+}
+
+/* ---------- Milestone type grid ---------- */
+.milestone-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.milestone-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.5);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+}
+.milestone-type-btn:hover {
+  border-color: rgba(255, 210, 122, 0.4);
+  transform: translateY(-1px);
+}
+.milestone-type-btn--active {
+  border-color: var(--gold);
+  background: rgba(255, 210, 122, 0.09);
+}
+.milestone-type-btn__glyph {
+  font-size: 18px;
+  color: var(--gold);
+  line-height: 1;
+}
+.milestone-type-btn__label {
+  font-size: 11px;
+  color: var(--ink-soft);
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+}
+
 /* ---------- Scrollbars ---------- */
 .panel__body::-webkit-scrollbar,
 .modal::-webkit-scrollbar {

@@ -1,6 +1,31 @@
 // Domain model for Universe.
 // The person is always the center. Nothing here references illness or diagnosis.
 
+export type UserRole = "patient" | "survivor" | "caregiver" | "supporter";
+
+export type JourneyStage = "diagnosis" | "treatment" | "remission" | "survivorship";
+
+export type MilestoneType =
+  | "treatment_started"
+  | "surgery_done"
+  | "chemo_complete"
+  | "radiation_done"
+  | "first_clear_scan"
+  | "one_year_clear"
+  | "five_year_clear"
+  | "treatment_complete"
+  | "custom";
+
+export interface Milestone {
+  id: string;
+  type: MilestoneType;
+  title: string;
+  description?: string;
+  date: string; // ISO date
+  createdAt: number;
+  isPublic: boolean;
+}
+
 export type RelationshipKind =
   | "Mother"
   | "Father"
@@ -107,7 +132,10 @@ export interface Memory {
 export interface UniverseUser {
   name: string;
   color: string;
-  joinedAt?: number; // when this person first entered the shared universe
+  joinedAt?: number;
+  role?: UserRole;
+  stage?: JourneyStage;
+  isPublic?: boolean; // opt-in to appear in the community cosmos
 }
 
 // One person's whole presence in the shared universe — their star and the
@@ -118,6 +146,7 @@ export interface Citizen {
   people: Person[];
   lights: Light[];
   memories: Memory[];
+  milestones: Milestone[];
 }
 
 // Legacy Phase 1 message shape — kept only so existing data can be migrated
@@ -137,6 +166,7 @@ export interface UniverseData {
   people: Person[];
   lights: Light[];
   memories: Memory[];
+  milestones: Milestone[];
   messages?: LegacyMessage[]; // legacy; migrated then ignored
 }
 
@@ -145,4 +175,5 @@ export const emptyUniverse = (): UniverseData => ({
   people: [],
   lights: [],
   memories: [],
+  milestones: [],
 });

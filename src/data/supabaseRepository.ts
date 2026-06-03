@@ -108,6 +108,7 @@ function toCitizen(id: string, data: UniverseData): Citizen | null {
     people: data.people ?? [],
     lights: data.lights ?? [],
     memories: data.memories ?? [],
+    milestones: data.milestones ?? [],
   };
 }
 

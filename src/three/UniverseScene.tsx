@@ -92,6 +92,7 @@ export function UniverseScene() {
   const people = useUniverseStore((s) => s.people);
   const lights = useUniverseStore((s) => s.lights);
   const memories = useUniverseStore((s) => s.memories);
+  const milestones = useUniverseStore((s) => s.milestones);
   const selectedCitizenId = useUniverseStore((s) => s.selectedCitizenId);
 
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
@@ -102,10 +103,10 @@ export function UniverseScene() {
   // Build the rendered world: your live self plus every other citizen.
   const world = useMemo<Citizen[]>(() => {
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories }
+      ? { ownerId: selfId, user, people, lights, memories, milestones }
       : null;
     return self ? [self, ...others] : others;
-  }, [selfId, user, people, lights, memories, others]);
+  }, [selfId, user, people, lights, memories, milestones, others]);
 
   const anySelection = world.length > 1;
 
