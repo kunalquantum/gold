@@ -6,6 +6,8 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const SUPABASE_CONFIGURED = Boolean(url && key);
+export const SUPABASE_URL: string | undefined = url;
+export const SUPABASE_ANON_KEY: string | undefined = key;
 
 // Null when no credentials are present — the app then runs fully local.
 export const supabase: SupabaseClient | null = SUPABASE_CONFIGURED
