@@ -7,12 +7,15 @@ import { AddPersonModal } from "./ui/AddPersonModal";
 import { PersonDetailPanel } from "./ui/PersonDetailPanel";
 import { LightLetter } from "./ui/LightLetter";
 import { FeelingDoor } from "./ui/FeelingDoor";
+import { CommunityPanel } from "./ui/CommunityPanel";
+import { MilestoneModal } from "./ui/MilestoneModal";
 
 export default function App() {
   const loaded = useUniverseStore((s) => s.loaded);
   const user = useUniverseStore((s) => s.user);
   const people = useUniverseStore((s) => s.people);
   const lights = useUniverseStore((s) => s.lights);
+  const milestones = useUniverseStore((s) => s.milestones);
   const others = useUniverseStore((s) => s.others);
   const overlay = useUniverseStore((s) => s.overlay);
   const openedLightId = useUniverseStore((s) => s.openedLightId);
@@ -37,6 +40,9 @@ export default function App() {
   const hasWaitingLight = lights.some(
     (l) => l.sealed && l.unlockTrigger && l.unlockTrigger !== "one_year",
   );
+
+  const isSurvivor = user?.role === "survivor";
+  const milestonesCount = milestones.length;
 
   if (!loaded) {
     return <div className="boot" />;
@@ -83,6 +89,27 @@ export default function App() {
                     When you need it
                   </button>
                 )}
+
+                <button
+                  className="cosmos-btn"
+                  onClick={() => openOverlay({ kind: "community" })}
+                  title="See the community cosmos"
+                >
+                  <span className="cosmos-btn__glyph">✺</span>
+                  The Cosmos
+                  {population > 1 && <span className="cosmos-btn__count">{population}</span>}
+                </button>
+
+                {(isSurvivor || milestonesCount > 0 || user.role === "patient") && (
+                  <button
+                    className="milestone-hud-btn"
+                    onClick={() => openOverlay({ kind: "milestone" })}
+                    title="Mark a milestone"
+                  >
+                    {milestonesCount > 0 ? `★ ${milestonesCount}` : "★ Mark a moment"}
+                  </button>
+                )}
+
                 <button className="add-btn" onClick={() => openOverlay({ kind: "addPerson" })} title="Add someone">
                   <span>+</span>
                   Add someone
@@ -100,6 +127,8 @@ export default function App() {
         {overlay.kind === "personDetail" && (
           <PersonDetailPanel key={overlay.personId} personId={overlay.personId} />
         )}
+        {overlay.kind === "community" && <CommunityPanel key="community" />}
+        {overlay.kind === "milestone" && <MilestoneModal key="milestone" />}
       </AnimatePresence>
 
       <AnimatePresence>

@@ -19,6 +19,7 @@ export class LocalRepository implements UniverseRepository {
         people: parsed.people ?? [],
         lights: parsed.lights ?? [],
         memories: parsed.memories ?? [],
+        milestones: parsed.milestones ?? [],
         messages: parsed.messages ?? [], // legacy; migrated by the store
       };
     } catch {
@@ -45,6 +46,7 @@ export class LocalRepository implements UniverseRepository {
         people: data.people,
         lights: data.lights,
         memories: data.memories,
+        milestones: data.milestones,
       },
     ];
   }

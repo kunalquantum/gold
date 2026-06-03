@@ -5,6 +5,7 @@ import type {
   LightReaction,
   LightType,
   Memory,
+  Milestone,
   Person,
   UnlockTrigger,
   UniverseData,
@@ -26,7 +27,9 @@ export type Overlay =
   | { kind: "onboarding" }
   | { kind: "addPerson" }
   | { kind: "personDetail"; personId: string }
-  | { kind: "feelingDoor" };
+  | { kind: "feelingDoor" }
+  | { kind: "community" }
+  | { kind: "milestone" };
 
 export interface NewLight {
   senderId: string;
@@ -44,6 +47,7 @@ interface UniverseState extends UniverseData {
   focusedPersonId: string | null;
   openedLightId: string | null;
   arriving: string[];
+  milestones: Milestone[];
 
   // Shared world
   selfId: string;
@@ -66,6 +70,10 @@ interface UniverseState extends UniverseData {
 
   addMemory: (input: Omit<Memory, "id" | "createdAt">) => void;
 
+  addMilestone: (input: Omit<Milestone, "id" | "createdAt">) => void;
+  setPrivacy: (isPublic: boolean) => void;
+  setRoleAndStage: (updates: Pick<UniverseUser, "role" | "stage">) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -77,8 +85,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories } = get();
-  void repository.save({ user, people, lights, memories });
+  const { user, people, lights, memories, milestones } = get();
+  void repository.save({ user, people, lights, memories, milestones });
 }
 
 function buildLight(input: NewLight): Light {
@@ -132,6 +140,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       user: data.user,
       people: data.people,
       memories: data.memories,
+      milestones: data.milestones ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -245,15 +254,31 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     persist(get);
   },
 
+  addMilestone: (input) => {
+    const milestone: Milestone = { ...input, id: uid(), createdAt: Date.now() };
+    set((s) => ({ milestones: [...s.milestones, milestone] }));
+    persist(get);
+  },
+
+  setPrivacy: (isPublic) => {
+    set((s) => ({ user: s.user ? { ...s.user, isPublic } : s.user }));
+    persist(get);
+  },
+
+  setRoleAndStage: (updates) => {
+    set((s) => ({ user: s.user ? { ...s.user, ...updates } : s.user }));
+    persist(get);
+  },
+
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
 
   selfCitizen: () => {
-    const { user, people, lights, memories } = get();
+    const { user, people, lights, memories, milestones } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories };
+    return { ownerId: SELF, user, people, lights, memories, milestones };
   },
 
   world: () => {

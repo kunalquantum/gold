@@ -1,10 +1,13 @@
 import type {
+  JourneyStage,
   LightForm,
   LightReaction,
   LightType,
+  MilestoneType,
   OrbitParams,
   RelationshipKind,
   UnlockTrigger,
+  UserRole,
 } from "./types";
 
 export const uid = (): string =>
@@ -203,6 +206,46 @@ const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 export function unlockTimeFor(trigger: UnlockTrigger, from: number): number | undefined {
   return trigger === "one_year" ? from + YEAR_MS : undefined;
 }
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  patient: "On the journey",
+  survivor: "Survivor",
+  caregiver: "Caregiver",
+  supporter: "Supporter",
+};
+
+export const ROLE_COLORS: Record<UserRole, string> = {
+  patient: "#ffd27a",
+  survivor: "#ffd27a",
+  caregiver: "#9bb8ff",
+  supporter: "#8be8d8",
+};
+
+export const STAGE_LABELS: Record<JourneyStage, string> = {
+  diagnosis: "Diagnosis",
+  treatment: "In treatment",
+  remission: "Remission",
+  survivorship: "Survivorship",
+};
+
+export interface MilestoneDef {
+  type: MilestoneType;
+  glyph: string;
+  label: string;
+  defaultTitle: string;
+}
+
+export const MILESTONE_DEFS: MilestoneDef[] = [
+  { type: "treatment_started", glyph: "✦", label: "Treatment started", defaultTitle: "Treatment began" },
+  { type: "surgery_done", glyph: "◈", label: "Surgery complete", defaultTitle: "Surgery complete" },
+  { type: "chemo_complete", glyph: "◎", label: "Chemo complete", defaultTitle: "Chemo is done" },
+  { type: "radiation_done", glyph: "◉", label: "Radiation done", defaultTitle: "Radiation complete" },
+  { type: "first_clear_scan", glyph: "✧", label: "First clear scan", defaultTitle: "First clear scan" },
+  { type: "treatment_complete", glyph: "✺", label: "Treatment complete", defaultTitle: "Treatment is complete" },
+  { type: "one_year_clear", glyph: "★", label: "One year clear", defaultTitle: "One year clear" },
+  { type: "five_year_clear", glyph: "✵", label: "Five years clear", defaultTitle: "Five years clear" },
+  { type: "custom", glyph: "·", label: "My own moment", defaultTitle: "" },
+];
 
 export function formatDate(value?: string | number): string {
   if (!value) return "";
