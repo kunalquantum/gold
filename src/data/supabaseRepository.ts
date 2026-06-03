@@ -111,6 +111,24 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
+  // Fetch specific citizens by ID — used for orbit-priority loading.
+  async loadCitizensByIds(ids: string[]): Promise<Citizen[]> {
+    if (!supabase || ids.length === 0) return [];
+    try {
+      const { data, error } = await supabase
+        .from(PUBLIC_TABLE)
+        .select("id, data")
+        .in("id", ids);
+      if (error) throw error;
+      return (data ?? [])
+        .map((row) => toCitizen(row.id as string, row.data as PublicRow))
+        .filter((c): c is Citizen => c !== null);
+    } catch (err) {
+      console.warn("Universe: could not load orbited citizens", err);
+      return [];
+    }
+  }
+
   // One page of the shared world, ordered by most-recently-active first.
   // Caller increments offset by PAGE_SIZE until a short page is returned.
   async loadWorld(offset = 0): Promise<Citizen[]> {

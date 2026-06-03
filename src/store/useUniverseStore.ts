@@ -271,7 +271,26 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
         },
       });
     }
-    await get().loadWorld();
+
+    // Run the general world load and orbit-priority fetch in parallel.
+    // Orbit citizens are guaranteed to appear immediately regardless of their
+    // position in the activity-ordered pages.
+    const orbitIds = (data.orbits ?? []).map((o) => o.targetOwnerId);
+    const [, orbitCitizens] = await Promise.all([
+      get().loadWorld(),
+      orbitIds.length > 0 ? repository.loadCitizensByIds(orbitIds) : Promise.resolve([]),
+    ]);
+
+    if (orbitCitizens.length > 0) {
+      set((s) => {
+        const map = new Map(s.others.map((c) => [c.ownerId, c]));
+        for (const c of orbitCitizens) {
+          // Don't overwrite a citizen already loaded by loadWorld — that data is fresher.
+          if (c.ownerId !== SELF && !map.has(c.ownerId)) map.set(c.ownerId, c);
+        }
+        return { others: Array.from(map.values()) };
+      });
+    }
   },
 
   loadWorld: async () => {
@@ -288,12 +307,15 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       return { others: Array.from(map.values()) };
     });
 
+    // Cap at 9 background pages (+ the first = 10 pages, 500 citizens total).
+    // Realtime handles anything beyond that as users become active.
+    const MAX_BG_PAGES = 9;
     if (first.length >= WORLD_PAGE_SIZE) {
       void (async () => {
         let offset = WORLD_PAGE_SIZE;
-        for (;;) {
-          const page = await repository.loadWorld(offset);
-          const citizens = toOthers(page);
+        for (let page = 0; page < MAX_BG_PAGES; page++) {
+          const batch = await repository.loadWorld(offset);
+          const citizens = toOthers(batch);
           if (citizens.length > 0) {
             set((s) => {
               const map = new Map(s.others.map((c) => [c.ownerId, c]));
@@ -301,7 +323,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
               return { others: Array.from(map.values()) };
             });
           }
-          if (page.length < WORLD_PAGE_SIZE) break;
+          if (batch.length < WORLD_PAGE_SIZE) break;
           offset += WORLD_PAGE_SIZE;
         }
       })();
