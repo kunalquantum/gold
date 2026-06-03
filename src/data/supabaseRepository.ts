@@ -1,15 +1,54 @@
-import type { Citizen, UniverseData } from "../types";
+import type { Citizen, LightForm, LightType, UniverseData } from "../types";
 import type { UniverseRepository, WorldCallbacks } from "./repository";
 import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
 import { SUPABASE_CONFIGURED, supabase } from "./supabaseClient";
 
-const TABLE = "universes";
+const PRIVATE_TABLE = "universes";
+const PUBLIC_TABLE  = "universe_public";
 const SAVE_DEBOUNCE_MS = 700;
+
+// Sanitised shape stored in universe_public. No content, no photos, no private identifiers.
+interface PublicRow {
+  user: UniverseData["user"];
+  people: Array<{ id: string; name: string; relationship: string; orbit: unknown; createdAt: number }>;
+  lights: Array<{ id: string; senderId: string; receiverId: string; type: LightType; content: string; sealed: boolean; opened: boolean; createdAt: number; orbitPosition: number; color: string; form: LightForm }>;
+  milestones: UniverseData["milestones"];
+  nebulas: UniverseData["nebulas"];
+  artifacts: UniverseData["artifacts"];
+  dreams: UniverseData["dreams"];
+  fragments: UniverseData["fragments"];
+  wisdom: UniverseData["wisdom"];
+  signals: UniverseData["signals"];
+  constellations: UniverseData["constellations"];
+}
+
+function toPublicRow(data: UniverseData): PublicRow {
+  return {
+    user: data.user,
+    // Strip photo — keeps name/relationship for planet labels in the 3D scene.
+    people: (data.people ?? []).map(({ id, name, relationship, orbit, createdAt }) => ({ id, name, relationship, orbit, createdAt })),
+    // Strip content/media/sender/receiver — visual orbit parameters only.
+    lights: (data.lights ?? []).map(({ id, orbitPosition, color, form, sealed }) => ({
+      id, orbitPosition, color, form, sealed,
+      senderId: "", receiverId: "", type: "text" as LightType, content: "", opened: false, createdAt: 0,
+    })),
+    milestones: (data.milestones ?? []).filter((m) => m.isPublic),
+    nebulas:        data.nebulas        ?? [],
+    artifacts:      data.artifacts      ?? [],
+    dreams:         data.dreams         ?? [],
+    fragments:      data.fragments      ?? [],
+    wisdom:         data.wisdom         ?? [],
+    signals:        (data.signals ?? []).filter((s) => s.visibility === "public"),
+    constellations: data.constellations ?? [],
+  };
+}
 
 // Cloud-synced, local-first repository for the shared universe:
 //   • your own universe reads/writes locally first, then syncs (debounced)
-//   • the whole world (every citizen) is read from Supabase and kept live
+//   • private data (lights, people, memories) stays in `universes` — owner-only
+//   • public data (visual params, public signals, nebulas) mirrors to `universe_public`
+//   • the world is loaded from and subscribed via `universe_public` only
 class SupabaseRepository implements UniverseRepository {
   // Getter so auth changes (setAuthUserId) are picked up without
   // re-instantiating the repository.
@@ -21,7 +60,7 @@ class SupabaseRepository implements UniverseRepository {
     if (!supabase) return localRepository.load();
     try {
       const { data, error } = await supabase
-        .from(TABLE)
+        .from(PRIVATE_TABLE)
         .select("data")
         .eq("id", this.id)
         .maybeSingle();
@@ -57,25 +96,26 @@ class SupabaseRepository implements UniverseRepository {
   private async flush(data: UniverseData): Promise<void> {
     if (!supabase) return;
     try {
-      const { error } = await supabase.from(TABLE).upsert({
-        id: this.id,
-        data,
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      const now = new Date().toISOString();
+      const [privateResult, publicResult] = await Promise.all([
+        supabase.from(PRIVATE_TABLE).upsert({ id: this.id, data, updated_at: now }),
+        supabase.from(PUBLIC_TABLE).upsert({ id: this.id, data: toPublicRow(data), updated_at: now }),
+      ]);
+      if (privateResult.error) throw privateResult.error;
+      if (publicResult.error) throw publicResult.error;
     } catch (err) {
       console.warn("Universe: Supabase save failed — kept locally", err);
     }
   }
 
-  // Every citizen in the shared universe, including this one.
+  // Every citizen in the shared universe, read from the public table.
   async loadWorld(): Promise<Citizen[]> {
     if (!supabase) return localRepository.loadWorld();
     try {
-      const { data, error } = await supabase.from(TABLE).select("id, data");
+      const { data, error } = await supabase.from(PUBLIC_TABLE).select("id, data");
       if (error) throw error;
       return (data ?? [])
-        .map((row) => toCitizen(row.id as string, row.data as UniverseData))
+        .map((row) => toCitizen(row.id as string, row.data as PublicRow))
         .filter((c): c is Citizen => c !== null);
     } catch (err) {
       console.warn("Universe: could not load the shared world", err);
@@ -83,8 +123,8 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
-  // Subscribes to row-level changes and delivers surgical updates via callbacks.
-  // Uses the real-time payload directly — no full table re-fetch on every change.
+  // Subscribes to row-level changes in universe_public and delivers surgical
+  // updates via callbacks. No full table re-fetch on every change.
   subscribeWorld(callbacks: WorldCallbacks): () => void {
     const client = supabase;
     if (!client) {
@@ -96,7 +136,7 @@ class SupabaseRepository implements UniverseRepository {
       .channel("shared-universe")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: TABLE },
+        { event: "*", schema: "public", table: PUBLIC_TABLE },
         (payload) => {
           if (payload.eventType === "DELETE") {
             const id = (payload.old as Record<string, unknown>).id as string | undefined;
@@ -105,10 +145,10 @@ class SupabaseRepository implements UniverseRepository {
             const row = payload.new as Record<string, unknown>;
             const id = row.id as string | undefined;
             if (!id) return;
-            const data = row.data as UniverseData | undefined;
+            const data = row.data as PublicRow | undefined;
             const citizen = data ? toCitizen(id, data) : null;
             if (citizen) callbacks.onUpsert(citizen);
-            else callbacks.onDelete(id); // Row present but no valid profile yet
+            else callbacks.onDelete(id);
           }
         },
       )
@@ -126,22 +166,25 @@ class SupabaseRepository implements UniverseRepository {
   }
 }
 
-// A row only becomes a visible citizen once it has a named person.
-function toCitizen(id: string, data: UniverseData): Citizen | null {
+// A row only becomes a visible citizen once it has a named profile.
+function toCitizen(id: string, data: PublicRow): Citizen | null {
   if (!data?.user?.name) return null;
   return {
     ownerId: id,
-    user: data.user,
-    people: data.people ?? [],
-    lights: data.lights ?? [],
-    memories: data.memories ?? [],
-    milestones: data.milestones ?? [],
-    nebulas: data.nebulas ?? [],
-    artifacts: data.artifacts ?? [],
-    dreams: data.dreams ?? [],
-    fragments: data.fragments ?? [],
-    wisdom: data.wisdom ?? [],
-    signals: data.signals ?? [],
+    user: data.user!,
+    // PublicRow.people omits `photo` — that field is optional in Person so this is safe.
+    people: (data.people ?? []) as Citizen["people"],
+    // PublicRow.lights have empty content/sender/receiver — visual rendering only uses
+    // orbitPosition, color, form, sealed, id. All present.
+    lights: (data.lights ?? []) as Citizen["lights"],
+    memories:       [],
+    milestones:     data.milestones     ?? [],
+    nebulas:        data.nebulas        ?? [],
+    artifacts:      data.artifacts      ?? [],
+    dreams:         data.dreams         ?? [],
+    fragments:      data.fragments      ?? [],
+    wisdom:         data.wisdom         ?? [],
+    signals:        data.signals        ?? [],
     constellations: data.constellations ?? [],
   };
 }
