@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AdaptiveDpr, OrbitControls } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
@@ -13,6 +13,65 @@ import { Nebula } from "./Nebula";
 import { GivenLightBeams } from "./GivenLightBeams";
 import type { Citizen, Light, Person } from "../types";
 
+// ─── LOD ─────────────────────────────────────────────────────────────────────
+// Per-citizen render complexity, chosen every 30 frames from the distance
+// between each star and the OrbitControls target point.
+// Selected citizen and self are always "full" regardless of distance.
+
+export type LODLevel = "full" | "simple" | "minimal" | "hidden";
+
+const LOD_FULL_SQ    = 100 * 100;   // < 100 units  → full: star + planets + nebulas + dreams
+const LOD_SIMPLE_SQ  = 220 * 220;   // 100–220 units → simple: star + planets only
+const LOD_MINIMAL_SQ = 380 * 380;   // 220–380 units → minimal: star glyph only
+                                     // > 380 units  → hidden: not mounted
+
+// Lives inside Canvas so useFrame is available.
+// Recomputes the LOD map every 30 frames; calls onUpdate only when something changed.
+function LODManager({ world, selectedCitizenId, selfId, onUpdate }: {
+  world: Citizen[];
+  selectedCitizenId: string;
+  selfId: string;
+  onUpdate: (map: ReadonlyMap<string, LODLevel>) => void;
+}) {
+  const starPositions = useMemo<ReadonlyMap<string, readonly [number, number, number]>>(() => {
+    const m = new Map<string, readonly [number, number, number]>();
+    for (const c of world) m.set(c.ownerId, galaxyPosition(c.ownerId));
+    return m;
+  }, [world]);
+
+  const lodRef = useRef<Map<string, LODLevel>>(new Map());
+  const tick = useRef(0);
+
+  useFrame((state) => {
+    if (++tick.current % 30 !== 0) return;
+    const controls = state.controls as OrbitControlsImpl | null;
+    if (!controls) return;
+    const { x: tx, y: ty, z: tz } = controls.target;
+    let changed = false;
+    const cur = lodRef.current;
+
+    for (const [id, [sx, sy, sz]] of starPositions) {
+      const forced = id === selectedCitizenId || id === selfId;
+      let lod: LODLevel;
+      if (forced) {
+        lod = "full";
+      } else {
+        const dSq = (tx - sx) ** 2 + (ty - sy) ** 2 + (tz - sz) ** 2;
+        lod = dSq < LOD_FULL_SQ    ? "full"
+            : dSq < LOD_SIMPLE_SQ  ? "simple"
+            : dSq < LOD_MINIMAL_SQ ? "minimal"
+            : "hidden";
+      }
+      if (cur.get(id) !== lod) { cur.set(id, lod); changed = true; }
+    }
+
+    if (changed) onUpdate(new Map(cur));
+  });
+
+  return null;
+}
+
+// ─── Camera ──────────────────────────────────────────────────────────────────
 // Smoothly carries the camera across the galaxy: to a light being read, to a
 // person being explored, or to whichever citizen's system is selected.
 function CameraRig() {
@@ -25,7 +84,6 @@ function CameraRig() {
   const up25 = useMemo(() => new THREE.Vector3(0, 2.5, 0), []);
   // After a selection/recentre change, the rig flies for SETTLE_SECS then
   // releases control entirely — free roam resumes after the timer expires.
-  // Close-up modes (focused person/light) always track because those targets move.
   const SETTLE_SECS = 1.8;
   const releaseAt = useRef(0);
   const prevKey = useRef("");
@@ -37,7 +95,6 @@ function CameraRig() {
 
     const ownerPos = (ownerId: string) => galaxyPosition(ownerId);
 
-    // Any change in selection or explicit recentre() restarts the fly-to timer.
     const key = `${selectedCitizenId}|${focusedPersonId ?? ""}|${openedLightId ?? ""}|${recentreSeq}`;
     if (key !== prevKey.current) {
       prevKey.current = key;
@@ -46,7 +103,6 @@ function CameraRig() {
 
     let close = false;
 
-    // Only build the world array when we actually need to find a specific object.
     const openedLight = openedLightId
       ? findLight(store.world(), openedLightId)
       : null;
@@ -70,7 +126,6 @@ function CameraRig() {
       desired.copy(target).addScaledVector(tmp, 6).add(up25);
       close = true;
     } else {
-      // Idle: stop lerping once the timer expires — full free roam from here.
       if (t >= releaseAt.current) return;
       const [bx, by, bz] = ownerPos(selectedCitizenId);
       target.set(bx, by, bz);
@@ -80,8 +135,6 @@ function CameraRig() {
     camera.position.lerp(desired, close ? 0.045 : 0.06);
     if (controls) {
       controls.target.lerp(target, close ? 0.07 : 0.08);
-      // drei's OrbitControls runs its own update() at frame priority −1 (before
-      // this hook). Calling update() again here would double-apply damping.
     }
   });
 
@@ -123,17 +176,34 @@ export function UniverseScene() {
   const selectedCitizenId = useUniverseStore((s) => s.selectedCitizenId);
 
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
-  const focusPerson = useUniverseStore((s) => s.focusPerson);
-  const openLight = useUniverseStore((s) => s.openLight);
-  const openOverlay = useUniverseStore((s) => s.openOverlay);
+  const focusPerson   = useUniverseStore((s) => s.focusPerson);
+  const openLight     = useUniverseStore((s) => s.openLight);
+  const openOverlay   = useUniverseStore((s) => s.openOverlay);
 
-  const handleEnterNebula = (nebulaId: string) => {
+  // Stable callbacks — Zustand actions never change identity.
+  const handleEnterNebula = useCallback((nebulaId: string) => {
     openOverlay({ kind: "nebulaInterior", nebulaId });
-  };
+  }, [openOverlay]);
 
-  const handleOpenDream = (dreamId: string) => {
+  const handleOpenDream = useCallback((dreamId: string) => {
     openOverlay({ kind: "dreamDetail", dreamId });
-  };
+  }, [openOverlay]);
+
+  const handleSelectStar = useCallback((citizen: Citizen) => {
+    selectCitizen(citizen.ownerId);
+    focusPerson(null);
+  }, [selectCitizen, focusPerson]);
+
+  const handleSelectPerson = useCallback((person: Person, citizen: Citizen) => {
+    selectCitizen(citizen.ownerId);
+    focusPerson(person.id);
+    openOverlay({ kind: "personDetail", personId: person.id });
+  }, [selectCitizen, focusPerson, openOverlay]);
+
+  const handleOpenLight = useCallback((light: Light, citizen: Citizen) => {
+    selectCitizen(citizen.ownerId);
+    openLight(light.id);
+  }, [selectCitizen, openLight]);
 
   // Build the rendered world: your live self plus every other citizen, with shared
   // nebulas and shared dreams injected into participant citizens.
@@ -144,7 +214,6 @@ export function UniverseScene() {
     const raw = self ? [self, ...others] : others;
 
     return raw.map((citizen) => {
-      // Shared nebulas
       const sharedNebulas = raw
         .filter((other) => other.ownerId !== citizen.ownerId)
         .flatMap((other) =>
@@ -159,7 +228,6 @@ export function UniverseScene() {
           : [],
       );
 
-      // Shared dreams
       const sharedDreams = raw
         .filter((other) => other.ownerId !== citizen.ownerId)
         .flatMap((other) =>
@@ -193,19 +261,8 @@ export function UniverseScene() {
     return m;
   }, [world]);
 
-  const handleSelectStar = (citizen: Citizen) => {
-    selectCitizen(citizen.ownerId);
-    focusPerson(null);
-  };
-  const handleSelectPerson = (person: Person, citizen: Citizen) => {
-    selectCitizen(citizen.ownerId);
-    focusPerson(person.id);
-    openOverlay({ kind: "personDetail", personId: person.id });
-  };
-  const handleOpenLight = (light: Light, citizen: Citizen) => {
-    selectCitizen(citizen.ownerId);
-    openLight(light.id);
-  };
+  // LOD map — updated inside Canvas by LODManager every 30 frames.
+  const [lodMap, setLodMap] = useState<ReadonlyMap<string, LODLevel>>(() => new Map());
 
   return (
     <Canvas
@@ -222,21 +279,27 @@ export function UniverseScene() {
       <FloatingParticles />
       <GivenLightBeams selfId={selfId} givenLights={givenLights} />
 
-      {world.map((citizen) => (
-        <System
-          key={citizen.ownerId}
-          citizen={citizen}
-          isSelf={citizen.ownerId === selfId}
-          selected={citizen.ownerId === selectedCitizenId}
-          anySelection={anySelection}
-          nameById={nameById}
-          onSelectStar={handleSelectStar}
-          onSelectPerson={handleSelectPerson}
-          onOpenLight={handleOpenLight}
-          onEnterNebula={handleEnterNebula}
-          onOpenDream={handleOpenDream}
-        />
-      ))}
+      {world.map((citizen) => {
+        const forced = citizen.ownerId === selectedCitizenId || citizen.ownerId === selfId;
+        const lod: LODLevel = forced ? "full" : (lodMap.get(citizen.ownerId) ?? "full");
+        if (lod === "hidden") return null;
+        return (
+          <System
+            key={citizen.ownerId}
+            citizen={citizen}
+            isSelf={citizen.ownerId === selfId}
+            selected={citizen.ownerId === selectedCitizenId}
+            anySelection={anySelection}
+            nameById={nameById}
+            lod={lod}
+            onSelectStar={handleSelectStar}
+            onSelectPerson={handleSelectPerson}
+            onOpenLight={handleOpenLight}
+            onEnterNebula={handleEnterNebula}
+            onOpenDream={handleOpenDream}
+          />
+        );
+      })}
 
       <OrbitControls
         makeDefault
@@ -249,6 +312,12 @@ export function UniverseScene() {
         panSpeed={0.5}
         minDistance={5}
         maxDistance={1800}
+      />
+      <LODManager
+        world={world}
+        selectedCitizenId={selectedCitizenId}
+        selfId={selfId}
+        onUpdate={setLodMap}
       />
       <CameraRig />
       <AdaptiveDpr pixelated />

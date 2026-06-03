@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useUniverseStore } from "../store/useUniverseStore";
 import { galaxyPosition } from "../utils";
 import type { Citizen, Light, Person } from "../types";
+import type { LODLevel } from "./UniverseScene";
 import { StarBody } from "./StarBody";
 import { PersonBody } from "./PersonBody";
 import { SystemLights } from "./LightField";
@@ -17,6 +18,7 @@ interface Props {
   selected: boolean;
   anySelection: boolean;
   nameById: Map<string, string>;
+  lod: LODLevel;
   onSelectStar: (citizen: Citizen) => void;
   onSelectPerson: (person: Person, citizen: Citizen) => void;
   onOpenLight: (light: Light, citizen: Citizen) => void;
@@ -25,12 +27,15 @@ interface Props {
 }
 
 // One citizen's solar system: their star, orbiting people, lights, and nearby nebulas.
-export function System({
+// memo'd so React skips re-rendering when props are identical — the LOD map update
+// in UniverseScene only causes re-renders for citizens whose lod level actually changed.
+export const System = memo(function System({
   citizen,
   isSelf,
   selected,
   anySelection,
   nameById,
+  lod,
   onSelectStar,
   onSelectPerson,
   onOpenLight,
@@ -51,7 +56,8 @@ export function System({
         onSelect={() => onSelectStar(citizen)}
       />
 
-      {citizen.people.map((person) => (
+      {/* simple + full: planets orbit the star */}
+      {lod !== "minimal" && citizen.people.map((person) => (
         <PersonBody
           key={person.id}
           person={person}
@@ -63,7 +69,8 @@ export function System({
         />
       ))}
 
-      {showLights && (
+      {/* simple + full: lights orbit the star (already gated to selected/self) */}
+      {lod !== "minimal" && showLights && (
         <SystemLights
           lights={citizen.lights}
           dimmed={dimmed}
@@ -71,8 +78,9 @@ export function System({
         />
       )}
 
-      {/* Memory nebulas float near this citizen's star */}
-      {citizen.nebulas.map((nebula) => {
+      {/* full only: nebulas, signal pulses, dream stars are expensive and only
+          meaningful when the citizen is nearby */}
+      {lod === "full" && citizen.nebulas.map((nebula) => {
         const sharedFromName = nebula.sharedFromId ? nameById.get(nebula.sharedFromId) : undefined;
         return (
           <NebulaMesh
@@ -86,8 +94,7 @@ export function System({
         );
       })}
 
-      {/* Signal pulses — expanding rings for citizens with recent signals */}
-      {citizen.signals
+      {lod === "full" && citizen.signals
         .filter((s) => s.visibility === "public" && Date.now() - s.createdAt < SIGNAL_RECENCY_MS)
         .slice(0, 3)
         .map((s, i) => (
@@ -99,8 +106,7 @@ export function System({
           />
         ))}
 
-      {/* Dream stars float in deep space beyond the known system */}
-      {citizen.dreams.map((dream) => {
+      {lod === "full" && citizen.dreams.map((dream) => {
         const sharedFromName = dream.sharedFromId ? nameById.get(dream.sharedFromId) : undefined;
         return (
           <DreamStarMesh
@@ -115,4 +121,4 @@ export function System({
       })}
     </group>
   );
-}
+});
