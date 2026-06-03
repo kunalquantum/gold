@@ -95,6 +95,8 @@ export function UniverseScene() {
   const milestones = useUniverseStore((s) => s.milestones);
   const nebulas = useUniverseStore((s) => s.nebulas);
   const artifacts = useUniverseStore((s) => s.artifacts);
+  const dreams = useUniverseStore((s) => s.dreams);
+  const fragments = useUniverseStore((s) => s.fragments);
   const selectedCitizenId = useUniverseStore((s) => s.selectedCitizenId);
 
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
@@ -106,15 +108,20 @@ export function UniverseScene() {
     openOverlay({ kind: "nebulaInterior", nebulaId });
   };
 
+  const handleOpenDream = (dreamId: string) => {
+    openOverlay({ kind: "dreamDetail", dreamId });
+  };
+
   // Build the rendered world: your live self plus every other citizen, with shared
-  // nebulas injected into each participant citizen so they appear near their star.
+  // nebulas and shared dreams injected into participant citizens.
   const world = useMemo<Citizen[]>(() => {
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts }
+      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments }
       : null;
     const raw = self ? [self, ...others] : others;
 
     return raw.map((citizen) => {
+      // Shared nebulas
       const sharedNebulas = raw
         .filter((other) => other.ownerId !== citizen.ownerId)
         .flatMap((other) =>
@@ -122,22 +129,38 @@ export function UniverseScene() {
             .filter((n) => n.participantIds.includes(citizen.ownerId))
             .map((n) => ({ ...n, sharedFromId: other.ownerId })),
         );
-      if (sharedNebulas.length === 0) return citizen;
-
-      // Pull in artifacts that belong to these shared nebulas from their owners
       const sharedIds = new Set(sharedNebulas.map((n) => n.id));
       const extraArtifacts = raw.flatMap((other) =>
         other.ownerId !== citizen.ownerId
           ? other.artifacts.filter((a) => sharedIds.has(a.nebulaId))
           : [],
       );
+
+      // Shared dreams
+      const sharedDreams = raw
+        .filter((other) => other.ownerId !== citizen.ownerId)
+        .flatMap((other) =>
+          other.dreams
+            .filter((d) => d.participantIds.includes(citizen.ownerId))
+            .map((d) => ({ ...d, sharedFromId: other.ownerId })),
+        );
+      const sharedDreamIds = new Set(sharedDreams.map((d) => d.id));
+      const extraFragments = raw.flatMap((other) =>
+        other.ownerId !== citizen.ownerId
+          ? other.fragments.filter((f) => sharedDreamIds.has(f.dreamId))
+          : [],
+      );
+
+      if (sharedNebulas.length === 0 && sharedDreams.length === 0) return citizen;
       return {
         ...citizen,
         nebulas: [...citizen.nebulas, ...sharedNebulas],
         artifacts: [...citizen.artifacts, ...extraArtifacts],
+        dreams: [...citizen.dreams, ...sharedDreams],
+        fragments: [...citizen.fragments, ...extraFragments],
       };
     });
-  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, others]);
+  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, others]);
 
   const anySelection = world.length > 1;
 
@@ -180,6 +203,7 @@ export function UniverseScene() {
           onSelectPerson={handleSelectPerson}
           onOpenLight={handleOpenLight}
           onEnterNebula={handleEnterNebula}
+          onOpenDream={handleOpenDream}
         />
       ))}
 

@@ -57,6 +57,44 @@ export interface MemoryArtifact {
   linkedArtifactId?: string; // memory trail link
 }
 
+// ─── Phase 5: Dream Galaxy ────────────────────────────────────────────────────
+// Dreams live beyond the known universe — distant stars calling you forward.
+// Not goals. Not tasks. Experiences you still want to live.
+
+export type DreamCategory = "adventure" | "creativity" | "family" | "purpose";
+
+export type FutureLetterTrigger = "dream_completed" | "one_year" | "five_years";
+
+export interface DreamStar {
+  id: string;
+  title: string;
+  description?: string;
+  category: DreamCategory;
+  participantIds: string[]; // others who share this dream
+  createdAt: number;
+  // Runtime-only — set when injected from another citizen. Never persisted.
+  sharedFromId?: string;
+}
+
+// A small step toward a dream — orbits the dream star like a moon.
+export interface DreamFragment {
+  id: string;
+  dreamId: string;
+  title: string;
+  completed: boolean;
+  completedAt?: number;
+}
+
+// A letter to your future self, held until the dream comes true or time passes.
+export interface FutureLetter {
+  id: string;
+  dreamId: string;
+  content: string;
+  trigger: FutureLetterTrigger;
+  createdAt: number;
+  openedAt?: number;
+}
+
 export type RelationshipKind =
   | "Mother"
   | "Father"
@@ -83,12 +121,12 @@ export const RELATIONSHIP_KINDS: RelationshipKind[] = [
 // Stable visual parameters so a celestial body always appears in the same
 // place in the user's universe. Generated once when a person is created.
 export interface OrbitParams {
-  radius: number; // distance from the central body
-  speed: number; // angular velocity (radians/sec)
-  phase: number; // starting angle
-  inclination: number; // tilt of the orbital plane
-  size: number; // body radius
-  color: string; // body hue
+  radius: number;
+  speed: number;
+  phase: number;
+  inclination: number;
+  size: number;
+  color: string;
 }
 
 export interface Person {
@@ -101,20 +139,10 @@ export interface Person {
 }
 
 // ─── Phase 2: Messages of Light ──────────────────────────────────────────────
-// A Light is support made permanent — a message that would have vanished into a
-// chat thread, kept instead as a glowing object orbiting your star.
 
 export type LightType = "text" | "voice" | "photo" | "future";
-
-// The resting visual form a light settles into. ("Comet" is not a form — it's
-// the entrance animation every light plays once on arrival.)
 export type LightForm = "orb" | "lantern" | "firefly" | "fragment";
-
-// Calm, human responses — never likes, hearts, or counts.
 export type LightReaction = "thank_you" | "this_helped" | "saved_for_later";
-
-// What a Future Light Capsule waits for. Some are moments you feel; some are
-// occasions that arrive; "one_year" simply waits for time to pass.
 export type UnlockTrigger =
   | "scared"
   | "lonely"
@@ -127,36 +155,29 @@ export const SELF_ID = "self";
 
 export interface Light {
   id: string;
-  senderId: string; // personId it's from, or SELF_ID
-  receiverId: string; // SELF_ID for now (the universe owner)
+  senderId: string;
+  receiverId: string;
   type: LightType;
-  content: string; // text body or photo caption
-  mediaUrl?: string; // data URL (voice note or photo)
+  content: string;
+  mediaUrl?: string;
   createdAt: number;
-
-  // Future Light Capsule: sealed until its moment arrives.
   sealed: boolean;
-  unlockTrigger?: UnlockTrigger; // emotion/occasion this capsule opens for
-  unlockAt?: number; // time-based unlock (e.g. one year from now)
-
-  // State
-  opened: boolean; // has the user read this light yet
+  unlockTrigger?: UnlockTrigger;
+  unlockAt?: number;
+  opened: boolean;
   reaction?: LightReaction;
-
-  // Visual
-  orbitPosition: number; // stable base angle in [0,1)
+  orbitPosition: number;
   color: string;
   form: LightForm;
 }
 
-// A "Memory Star" — a moment that orbits the person it belongs to.
 export interface Memory {
   id: string;
   personId: string;
   title: string;
   description?: string;
-  photo?: string; // data URL
-  date?: string; // ISO date (the day the memory happened)
+  photo?: string;
+  date?: string;
   createdAt: number;
 }
 
@@ -166,11 +187,11 @@ export interface UniverseUser {
   joinedAt?: number;
   role?: UserRole;
   stage?: JourneyStage;
-  isPublic?: boolean; // opt-in to appear in the community cosmos
+  isPublic?: boolean;
 }
 
 // One person's whole presence in the shared universe — their star and the
-// system around it. The shared world is the set of all citizens.
+// system around it. futureLetters are private and not included here.
 export interface Citizen {
   ownerId: string;
   user: UniverseUser;
@@ -180,10 +201,10 @@ export interface Citizen {
   milestones: Milestone[];
   nebulas: MemoryNebula[];
   artifacts: MemoryArtifact[];
+  dreams: DreamStar[];
+  fragments: DreamFragment[];
 }
 
-// Legacy Phase 1 message shape — kept only so existing data can be migrated
-// into the Light model on load. New code should never write this.
 export interface LegacyMessage {
   id: string;
   personId: string;
@@ -202,7 +223,10 @@ export interface UniverseData {
   milestones: Milestone[];
   nebulas: MemoryNebula[];
   artifacts: MemoryArtifact[];
-  messages?: LegacyMessage[]; // legacy; migrated then ignored
+  dreams: DreamStar[];
+  fragments: DreamFragment[];
+  futureLetters: FutureLetter[]; // private — never included in Citizen/world
+  messages?: LegacyMessage[];
 }
 
 export const emptyUniverse = (): UniverseData => ({
@@ -213,4 +237,7 @@ export const emptyUniverse = (): UniverseData => ({
   milestones: [],
   nebulas: [],
   artifacts: [],
+  dreams: [],
+  fragments: [],
+  futureLetters: [],
 });

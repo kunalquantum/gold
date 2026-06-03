@@ -113,6 +113,8 @@ function toCitizen(id: string, data: UniverseData): Citizen | null {
     milestones: data.milestones ?? [],
     nebulas: data.nebulas ?? [],
     artifacts: data.artifacts ?? [],
+    dreams: data.dreams ?? [],
+    fragments: data.fragments ?? [],
   };
 }
 

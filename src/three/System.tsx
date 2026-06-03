@@ -6,6 +6,7 @@ import { StarBody } from "./StarBody";
 import { PersonBody } from "./PersonBody";
 import { SystemLights } from "./LightField";
 import { NebulaMesh } from "./NebulaMesh";
+import { DreamStarMesh } from "./DreamStarMesh";
 import { useShallow } from "zustand/react/shallow";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
   onSelectPerson: (person: Person, citizen: Citizen) => void;
   onOpenLight: (light: Light, citizen: Citizen) => void;
   onEnterNebula: (nebulaId: string) => void;
+  onOpenDream: (dreamId: string) => void;
 }
 
 // One citizen's solar system: their star, orbiting people, lights, and nearby nebulas.
@@ -29,6 +31,7 @@ export function System({
   onSelectPerson,
   onOpenLight,
   onEnterNebula,
+  onOpenDream,
 }: Props) {
   const focusedPersonId = useUniverseStore((s) => s.focusedPersonId);
   const others = useUniverseStore(useShallow((s) => s.others));
@@ -77,6 +80,23 @@ export function System({
             ownerPos={pos}
             artifactCount={citizen.artifacts.filter((a) => a.nebulaId === nebula.id).length}
             onEnter={onEnterNebula}
+            sharedFromName={sharedFromName}
+          />
+        );
+      })}
+
+      {/* Dream stars float in deep space beyond the known system */}
+      {citizen.dreams.map((dream) => {
+        const sharedFromName = dream.sharedFromId
+          ? others.find((c) => c.ownerId === dream.sharedFromId)?.user.name
+          : undefined;
+        return (
+          <DreamStarMesh
+            key={dream.id}
+            dream={dream}
+            ownerPos={pos}
+            fragments={citizen.fragments}
+            onOpen={onOpenDream}
             sharedFromName={sharedFromName}
           />
         );

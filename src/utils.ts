@@ -1,6 +1,8 @@
 import type {
   ArtifactType,
+  DreamCategory,
   EmotionTag,
+  FutureLetterTrigger,
   JourneyStage,
   LightForm,
   LightReaction,
@@ -323,6 +325,59 @@ export const MILESTONE_DEFS: MilestoneDef[] = [
   { type: "five_year_clear", glyph: "✵", label: "Five years clear", defaultTitle: "Five years clear" },
   { type: "custom", glyph: "·", label: "My own moment", defaultTitle: "" },
 ];
+
+// ─── Phase 5: Dream Galaxy ────────────────────────────────────────────────────
+
+export interface DreamCategoryPalette {
+  star: string;   // main star color
+  glow: string;   // halo glow color
+  core: string;   // inner bright core
+}
+
+export const DREAM_CATEGORY_PALETTES: Record<DreamCategory, DreamCategoryPalette> = {
+  adventure: { star: "#f7a741", glow: "#f76c1a", core: "#ffe0a0" },
+  creativity: { star: "#f76d8d", glow: "#f72a6c", core: "#ffc0d8" },
+  family:     { star: "#ffd27a", glow: "#ffa930", core: "#fff4cc" },
+  purpose:    { star: "#5bc8e8", glow: "#2ab0cc", core: "#c0f0ff" },
+};
+
+export const DREAM_CATEGORY_LABELS: Record<DreamCategory, string> = {
+  adventure: "Adventure",
+  creativity: "Creativity",
+  family: "Family",
+  purpose: "Purpose",
+};
+
+export const DREAM_CATEGORY_GLYPHS: Record<DreamCategory, string> = {
+  adventure: "◈",
+  creativity: "✦",
+  family: "♡",
+  purpose: "✺",
+};
+
+export const FUTURE_LETTER_LABELS: Record<FutureLetterTrigger, string> = {
+  dream_completed: "When this dream comes true",
+  one_year: "One year from now",
+  five_years: "Five years from now",
+};
+
+// Dream stars live in deep space — far beyond nebulas and the planetary system.
+// Radius 80–160 units from the owner's star, generous vertical spread.
+export function dreamGalaxyPosition(
+  dreamId: string,
+  ownerPos: [number, number, number],
+): [number, number, number] {
+  const h1 = hashId(dreamId + "::da");
+  const h2 = hashId(dreamId + "::db");
+  const h3 = hashId(dreamId + "::dc");
+  const dist = 80 + h1 * 80;
+  const angle = h2 * Math.PI * 2;
+  return [
+    ownerPos[0] + Math.cos(angle) * dist,
+    ownerPos[1] + (h3 - 0.5) * 70,
+    ownerPos[2] + Math.sin(angle) * dist,
+  ];
+}
 
 export function formatDate(value?: string | number): string {
   if (!value) return "";

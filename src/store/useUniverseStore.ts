@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import type {
   Citizen,
+  DreamCategory,
+  DreamFragment,
+  DreamStar,
+  FutureLetter,
+  FutureLetterTrigger,
   Light,
   LightReaction,
   LightType,
@@ -33,7 +38,9 @@ export type Overlay =
   | { kind: "community" }
   | { kind: "milestone" }
   | { kind: "createNebula" }
-  | { kind: "nebulaInterior"; nebulaId: string };
+  | { kind: "nebulaInterior"; nebulaId: string }
+  | { kind: "createDream" }
+  | { kind: "dreamDetail"; dreamId: string };
 
 export interface NewLight {
   senderId: string;
@@ -54,6 +61,9 @@ interface UniverseState extends UniverseData {
   milestones: Milestone[];
   nebulas: MemoryNebula[];
   artifacts: MemoryArtifact[];
+  dreams: DreamStar[];
+  fragments: DreamFragment[];
+  futureLetters: FutureLetter[];
 
   // Shared world
   selfId: string;
@@ -85,6 +95,12 @@ interface UniverseState extends UniverseData {
   echoNebula: (nebulaId: string) => void;
   addParticipantToNebula: (nebulaId: string, participantId: string) => void;
 
+  addDream: (input: { title: string; description?: string; category: DreamCategory }) => DreamStar;
+  addFragment: (dreamId: string, title: string) => DreamFragment;
+  completeFragment: (fragmentId: string) => void;
+  addFutureLetter: (input: { dreamId: string; content: string; trigger: FutureLetterTrigger }) => void;
+  addParticipantToDream: (dreamId: string, participantId: string) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -96,8 +112,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories, milestones, nebulas, artifacts } = get();
-  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts });
+  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters } = get();
+  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters });
 }
 
 function buildLight(input: NewLight): Light {
@@ -139,6 +155,12 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   focusedPersonId: null,
   openedLightId: null,
   arriving: [],
+  milestones: [],
+  nebulas: [],
+  artifacts: [],
+  dreams: [],
+  fragments: [],
+  futureLetters: [],
 
   selfId: SELF,
   others: [],
@@ -154,6 +176,9 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       milestones: data.milestones ?? [],
       nebulas: data.nebulas ?? [],
       artifacts: data.artifacts ?? [],
+      dreams: data.dreams ?? [],
+      fragments: data.fragments ?? [],
+      futureLetters: data.futureLetters ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -317,15 +342,73 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     persist(get);
   },
 
+  addDream: ({ title, description, category }) => {
+    const dream: DreamStar = {
+      id: uid(),
+      title: title.trim(),
+      description,
+      category,
+      participantIds: [],
+      createdAt: Date.now(),
+    };
+    set((s) => ({ dreams: [...s.dreams, dream] }));
+    persist(get);
+    return dream;
+  },
+
+  addFragment: (dreamId, title) => {
+    const fragment: DreamFragment = {
+      id: uid(),
+      dreamId,
+      title: title.trim(),
+      completed: false,
+    };
+    set((s) => ({ fragments: [...s.fragments, fragment] }));
+    persist(get);
+    return fragment;
+  },
+
+  completeFragment: (fragmentId) => {
+    set((s) => ({
+      fragments: s.fragments.map((f) =>
+        f.id === fragmentId ? { ...f, completed: !f.completed, completedAt: f.completed ? undefined : Date.now() } : f,
+      ),
+    }));
+    persist(get);
+  },
+
+  addFutureLetter: ({ dreamId, content, trigger }) => {
+    const letter: FutureLetter = {
+      id: uid(),
+      dreamId,
+      content,
+      trigger,
+      createdAt: Date.now(),
+    };
+    set((s) => ({ futureLetters: [...s.futureLetters, letter] }));
+    persist(get);
+  },
+
+  addParticipantToDream: (dreamId, participantId) => {
+    set((s) => ({
+      dreams: s.dreams.map((d) =>
+        d.id === dreamId && !d.participantIds.includes(participantId)
+          ? { ...d, participantIds: [...d.participantIds, participantId] }
+          : d,
+      ),
+    }));
+    persist(get);
+  },
+
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
 
   selfCitizen: () => {
-    const { user, people, lights, memories, milestones, nebulas, artifacts } = get();
+    const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts };
+    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments };
   },
 
   world: () => {

@@ -13,6 +13,8 @@ import { CommunityPanel } from "./ui/CommunityPanel";
 import { MilestoneModal } from "./ui/MilestoneModal";
 import { CreateNebulaModal } from "./ui/CreateNebulaModal";
 import { NebulaInterior } from "./three/NebulaInterior";
+import { CreateDreamModal } from "./ui/CreateDreamModal";
+import { DreamPanel } from "./ui/DreamPanel";
 
 export default function App() {
   const loaded = useUniverseStore((s) => s.loaded);
@@ -60,6 +62,7 @@ export default function App() {
   const isSurvivor = user?.role === "survivor";
   const milestonesCount = milestones.length;
   const nebulasCount = useUniverseStore((s) => s.nebulas).length;
+  const dreamsCount = useUniverseStore((s) => s.dreams).length;
   const inNebula = overlay.kind === "nebulaInterior";
 
   // Auth gate: show auth screen when Supabase is configured but no session exists.
@@ -158,6 +161,15 @@ export default function App() {
                   {nebulasCount > 0 ? `${nebulasCount} Nebula${nebulasCount === 1 ? "" : "s"}` : "New Memory"}
                 </button>
 
+                <button
+                  className="dream-hud-btn"
+                  onClick={() => openOverlay({ kind: "createDream" })}
+                  title="Add a dream to your sky"
+                >
+                  <span className="dream-hud-btn__glyph">✨</span>
+                  {dreamsCount > 0 ? `${dreamsCount} Dream${dreamsCount === 1 ? "" : "s"}` : "New Dream"}
+                </button>
+
                 <button className="add-btn" onClick={() => openOverlay({ kind: "addPerson" })} title="Add someone">
                   <span>+</span>
                   Add someone
@@ -180,6 +192,10 @@ export default function App() {
         {overlay.kind === "createNebula" && <CreateNebulaModal key="createNebula" />}
         {overlay.kind === "nebulaInterior" && (
           <NebulaInterior key={overlay.nebulaId} nebulaId={overlay.nebulaId} />
+        )}
+        {overlay.kind === "createDream" && <CreateDreamModal key="createDream" />}
+        {overlay.kind === "dreamDetail" && (
+          <DreamPanel key={overlay.dreamId} dreamId={overlay.dreamId} />
         )}
       </AnimatePresence>
 

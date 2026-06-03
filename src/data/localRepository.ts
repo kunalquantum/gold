@@ -22,7 +22,10 @@ export class LocalRepository implements UniverseRepository {
         milestones: parsed.milestones ?? [],
         nebulas: parsed.nebulas ?? [],
         artifacts: parsed.artifacts ?? [],
-        messages: parsed.messages ?? [], // legacy; migrated by the store
+        dreams: parsed.dreams ?? [],
+        fragments: parsed.fragments ?? [],
+        futureLetters: parsed.futureLetters ?? [],
+        messages: parsed.messages ?? [],
       };
     } catch {
       return emptyUniverse();
@@ -51,6 +54,8 @@ export class LocalRepository implements UniverseRepository {
         milestones: data.milestones,
         nebulas: data.nebulas,
         artifacts: data.artifacts,
+        dreams: data.dreams,
+        fragments: data.fragments,
       },
     ];
   }
