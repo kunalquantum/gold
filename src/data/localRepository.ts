@@ -70,7 +70,9 @@ export class LocalRepository implements UniverseRepository {
     ];
   }
 
-  subscribeWorld(): () => void {
+  subscribeWorld(callbacks: import("./repository").WorldCallbacks): () => void {
+    // Local-only mode — no live peers, no connection to report.
+    callbacks.onStatus("offline");
     return () => {};
   }
 }

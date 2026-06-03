@@ -31,6 +31,7 @@ import type {
 } from "../types";
 import { SELF_ID, emptyUniverse } from "../types";
 import { repository } from "../data/repository";
+import type { SyncStatus } from "../data/repository";
 import { ownerId } from "../data/identity";
 import {
   lightColor,
@@ -92,6 +93,7 @@ interface UniverseState extends UniverseData {
   selfId: string;
   others: Citizen[]; // every other citizen, from the cloud (live)
   selectedCitizenId: string; // whose system the camera is exploring
+  syncStatus: SyncStatus; // real-time channel health
 
   load: () => Promise<void>;
   loadWorld: () => Promise<void>;
@@ -210,6 +212,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   selfId: SELF,
   others: [],
   selectedCitizenId: SELF,
+  syncStatus: "connecting" as SyncStatus,
 
   load: async () => {
     const data = await repository.load();
@@ -237,13 +240,35 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     });
     persist(get);
 
-    // Bring in the rest of the shared universe and keep it live.
-    await get().loadWorld();
+    // Subscribe before the initial load so no change event is missed while
+    // loadWorld() is in flight.
     if (!worldUnsub) {
-      worldUnsub = repository.subscribeWorld(() => {
-        void get().loadWorld();
+      worldUnsub = repository.subscribeWorld({
+        onUpsert: (citizen) => {
+          if (citizen.ownerId === SELF) return;
+          set((s) => {
+            const idx = s.others.findIndex((c) => c.ownerId === citizen.ownerId);
+            const next = [...s.others];
+            if (idx >= 0) next[idx] = citizen;
+            else next.push(citizen);
+            return { others: next };
+          });
+        },
+        onDelete: (id) => {
+          if (id === SELF) return;
+          set((s) => ({ others: s.others.filter((c) => c.ownerId !== id) }));
+        },
+        onStatus: (status) => {
+          const prev = get().syncStatus;
+          set({ syncStatus: status });
+          // Re-fetch after reconnect to apply any changes missed during the gap.
+          if (status === "live" && prev === "reconnecting") {
+            void get().loadWorld();
+          }
+        },
       });
     }
+    await get().loadWorld();
   },
 
   loadWorld: async () => {

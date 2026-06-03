@@ -1,5 +1,5 @@
 import type { Citizen, UniverseData } from "../types";
-import type { UniverseRepository } from "./repository";
+import type { UniverseRepository, WorldCallbacks } from "./repository";
 import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
 import { SUPABASE_CONFIGURED, supabase } from "./supabaseClient";
@@ -83,21 +83,46 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
-  // Fires whenever anyone joins or changes their universe.
-  subscribeWorld(onChange: () => void): () => void {
+  // Subscribes to row-level changes and delivers surgical updates via callbacks.
+  // Uses the real-time payload directly — no full table re-fetch on every change.
+  subscribeWorld(callbacks: WorldCallbacks): () => void {
     const client = supabase;
-    if (!client) return () => {};
+    if (!client) {
+      callbacks.onStatus("offline");
+      return () => {};
+    }
+
     const channel = client
       .channel("shared-universe")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: TABLE },
-        () => onChange(),
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            const id = (payload.old as Record<string, unknown>).id as string | undefined;
+            if (id) callbacks.onDelete(id);
+          } else {
+            const row = payload.new as Record<string, unknown>;
+            const id = row.id as string | undefined;
+            if (!id) return;
+            const data = row.data as UniverseData | undefined;
+            const citizen = data ? toCitizen(id, data) : null;
+            if (citizen) callbacks.onUpsert(citizen);
+            else callbacks.onDelete(id); // Row present but no valid profile yet
+          }
+        },
       )
-      .subscribe();
-    return () => {
-      void client.removeChannel(channel);
-    };
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          callbacks.onStatus("live");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          callbacks.onStatus("reconnecting");
+        } else if (status === "CLOSED") {
+          callbacks.onStatus("offline");
+        }
+      });
+
+    return () => { void client.removeChannel(channel); };
   }
 }
 

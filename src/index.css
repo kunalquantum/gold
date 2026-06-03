@@ -210,6 +210,23 @@ canvas {
   letter-spacing: 0.4px;
   color: var(--ink-faint);
 }
+.hud__sync {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  transition: color 0.6s;
+}
+.hud__sync--live {
+  color: rgba(139, 232, 216, 0.7); /* soft teal — alive but quiet */
+}
+.hud__sync--connecting,
+.hud__sync--reconnecting {
+  color: rgba(255, 210, 122, 0.55); /* gold — working on it */
+  animation: hud-sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes hud-sync-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1;    }
+}
 .hud__account {
   display: flex;
   align-items: center;

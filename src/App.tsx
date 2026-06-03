@@ -46,6 +46,7 @@ export default function App() {
   const load = useUniverseStore((s) => s.load);
   const openOverlay = useUniverseStore((s) => s.openOverlay);
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
+  const syncStatus = useUniverseStore((s) => s.syncStatus);
 
   const authStatus = useAuthStore((s) => s.status);
   const userEmail = useAuthStore((s) => s.userEmail);
@@ -138,6 +139,11 @@ export default function App() {
                   {population > 1
                     ? `${population} souls share this sky · click any star to visit`
                     : "Drag to look around · add someone you love"}
+                  {syncStatus !== "offline" && (
+                    <span className={`hud__sync hud__sync--${syncStatus}`}>
+                      {syncStatus === "live" ? " · live" : " · syncing"}
+                    </span>
+                  )}
                 </span>
                 {authStatus === "authenticated" && userEmail && (
                   <div className="hud__account">
