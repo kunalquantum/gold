@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { MilestoneType } from "../types";
 import { MILESTONE_DEFS } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 export function MilestoneModal() {
   const closeOverlay = useUniverseStore((s) => s.closeOverlay);
@@ -11,6 +12,7 @@ export function MilestoneModal() {
   const [selectedType, setSelectedType] = useState<MilestoneType | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [guardError, setGuardError] = useState<string | null>(null);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [isPublic, setIsPublic] = useState(true);
 
@@ -24,6 +26,10 @@ export function MilestoneModal() {
 
   function handleSave() {
     if (!selectedType) return;
+    const combined = [title, description].filter(Boolean).join(" ");
+    const err = checkContent(combined);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     addMilestone({
       type: selectedType,
       title: title.trim(),
@@ -87,7 +93,7 @@ export function MilestoneModal() {
                 placeholder="e.g. Last chemo, done."
                 maxLength={80}
                 autoFocus
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => { setTitle(e.target.value); setGuardError(null); }}
               />
             </label>
 
@@ -99,7 +105,7 @@ export function MilestoneModal() {
                 placeholder="How it felt, who was there, what it means..."
                 rows={3}
                 maxLength={400}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => { setDescription(e.target.value); setGuardError(null); }}
               />
             </label>
 
@@ -128,6 +134,7 @@ export function MilestoneModal() {
           </motion.div>
         )}
 
+        {guardError && <p className="content-guard-error">{guardError}</p>}
         <button
           className="btn btn--primary"
           disabled={!canSave}

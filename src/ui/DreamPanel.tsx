@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { FutureLetterTrigger } from "../types";
+import { checkContent } from "../utils/contentGuard";
 import {
   DREAM_CATEGORY_GLYPHS,
   DREAM_CATEGORY_LABELS,
@@ -47,6 +48,7 @@ export function DreamPanel({ dreamId }: Props) {
   const [showLetterComposer, setShowLetterComposer] = useState(false);
   const [letterContent, setLetterContent] = useState("");
   const [letterTrigger, setLetterTrigger] = useState<FutureLetterTrigger>("dream_completed");
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   if (!dream) return null;
 
@@ -55,12 +57,18 @@ export function DreamPanel({ dreamId }: Props) {
 
   function handleAddFragment() {
     if (!fragmentInput.trim()) return;
+    const err = checkContent(fragmentInput);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     addFragment(dreamId, fragmentInput);
     setFragmentInput("");
   }
 
   function handleSaveLetter() {
     if (!letterContent.trim()) return;
+    const err = checkContent(letterContent);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     addFutureLetter({ dreamId, content: letterContent.trim(), trigger: letterTrigger });
     setLetterContent("");
     setShowLetterComposer(false);
@@ -169,7 +177,7 @@ export function DreamPanel({ dreamId }: Props) {
                 value={fragmentInput}
                 placeholder="Add a step…"
                 maxLength={100}
-                onChange={(e) => setFragmentInput(e.target.value)}
+                onChange={(e) => { setFragmentInput(e.target.value); setGuardError(null); }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleAddFragment(); }}
               />
               <button
@@ -181,6 +189,7 @@ export function DreamPanel({ dreamId }: Props) {
                 +
               </button>
             </div>
+            {guardError && <p className="content-guard-error">{guardError}</p>}
           </div>
 
           {/* Future letters — only for owner */}
@@ -219,7 +228,7 @@ export function DreamPanel({ dreamId }: Props) {
                       autoFocus
                       rows={5}
                       maxLength={2000}
-                      onChange={(e) => setLetterContent(e.target.value)}
+                      onChange={(e) => { setLetterContent(e.target.value); setGuardError(null); }}
                     />
 
                     <div className="letter-composer__triggers">
@@ -235,10 +244,11 @@ export function DreamPanel({ dreamId }: Props) {
                       ))}
                     </div>
 
+                    {guardError && <p className="content-guard-error">{guardError}</p>}
                     <div className="letter-composer__actions">
                       <button
                         className="btn btn--ghost"
-                        onClick={() => { setShowLetterComposer(false); setLetterContent(""); }}
+                        onClick={() => { setShowLetterComposer(false); setLetterContent(""); setGuardError(null); }}
                       >
                         Cancel
                       </button>

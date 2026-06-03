@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { DreamCategory } from "../types";
 import { DREAM_CATEGORY_GLYPHS, DREAM_CATEGORY_LABELS, DREAM_CATEGORY_PALETTES } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 const CATEGORIES: DreamCategory[] = ["adventure", "creativity", "family", "purpose"];
 
@@ -14,11 +15,16 @@ export function CreateDreamModal() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<DreamCategory | null>(null);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   const canCreate = title.trim().length > 0 && category !== null;
 
   function handleCreate() {
     if (!category) return;
+    const combined = [title, description].filter(Boolean).join(" ");
+    const err = checkContent(combined);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     const dream = addDream({ title, description: description.trim() || undefined, category });
     openOverlay({ kind: "dreamDetail", dreamId: dream.id });
   }
@@ -54,7 +60,7 @@ export function CreateDreamModal() {
             autoFocus
             placeholder="Visit Kashmir, learn guitar, plant a garden…"
             maxLength={80}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setGuardError(null); }}
             onKeyDown={(e) => { if (e.key === "Enter" && canCreate) handleCreate(); }}
           />
         </label>
@@ -66,7 +72,7 @@ export function CreateDreamModal() {
             value={description}
             placeholder="Why does this dream matter to you?"
             maxLength={200}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => { setDescription(e.target.value); setGuardError(null); }}
           />
         </label>
 
@@ -101,9 +107,10 @@ export function CreateDreamModal() {
           })}
         </div>
 
+        {guardError && <p className="content-guard-error" style={{ marginTop: "12px" }}>{guardError}</p>}
         <button
           className="btn btn--primary"
-          style={{ marginTop: "24px" }}
+          style={{ marginTop: "12px" }}
           disabled={!canCreate}
           onClick={handleCreate}
         >

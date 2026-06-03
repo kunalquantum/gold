@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { GivenLightType } from "../types";
 import { STAGE_LABELS } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 const GIVE_TYPES: { type: GivenLightType; label: string; hint: string }[] = [
   { type: "encouragement", label: "Encouragement", hint: "A few words that might help" },
@@ -32,6 +33,7 @@ export function LightIGivePanel() {
   const [content, setContent] = useState("");
   const [anonymous, setAnonymous] = useState(false);
   const [justSent, setJustSent] = useState(false);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   const myStageRank = user?.stage ? (STAGE_ORDER[user.stage] ?? -1) : -1;
   const isSurvivor = user?.role === "survivor";
@@ -48,6 +50,9 @@ export function LightIGivePanel() {
 
   function handleSend() {
     if (!composingFor || !content.trim()) return;
+    const err = checkContent(content);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     sendGivenLight({ toOwnerId: composingFor, type: lightType, content: content.trim(), anonymous });
     setContent("");
     setComposingFor(null);
@@ -168,7 +173,7 @@ export function LightIGivePanel() {
                 <textarea
                   className="light-give__textarea"
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => { setContent(e.target.value); setGuardError(null); }}
                   placeholder={
                     lightType === "story"
                       ? "\"The first few weeks were the hardest for me. One day at a time.\""
@@ -180,6 +185,7 @@ export function LightIGivePanel() {
                   maxLength={400}
                 />
 
+                {guardError && <p className="content-guard-error">{guardError}</p>}
                 <div className="light-give__composer-footer">
                   <label className="light-give__anon">
                     <input

@@ -4,6 +4,7 @@ import { useUniverseStore } from "../store/useUniverseStore";
 import type { ArtifactType } from "../types";
 import { ARTIFACT_DEFS, fileToDataUrl } from "../utils";
 import { useVoiceRecorder } from "./useVoiceRecorder";
+import { checkContent } from "../utils/contentGuard";
 
 interface Props {
   nebulaId: string;
@@ -20,6 +21,7 @@ export function CreateArtifactModal({ nebulaId, onClose }: Props) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<string | null>(null);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   const { recording: isRecording, start: startVoice, stop: stopVoice } = useVoiceRecorder();
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
@@ -49,6 +51,12 @@ export function CreateArtifactModal({ nebulaId, onClose }: Props) {
 
   function handleSave() {
     if (!type) return;
+    const textToCheck = [caption, type === "story" ? storyText : ""].filter(Boolean).join(" ");
+    if (textToCheck) {
+      const err = checkContent(textToCheck);
+      if (err) { setGuardError(err); return; }
+    }
+    setGuardError(null);
     const finalContent =
       type === "story" ? storyText :
       type === "voice" ? (voiceUrl ?? "") :
@@ -163,7 +171,7 @@ export function CreateArtifactModal({ nebulaId, onClose }: Props) {
                   maxLength={3000}
                   value={storyText}
                   style={{ fontFamily: "var(--display)", fontSize: "16px", lineHeight: 1.65 }}
-                  onChange={(e) => setStoryText(e.target.value)}
+                  onChange={(e) => { setStoryText(e.target.value); setGuardError(null); }}
                   autoFocus
                 />
               </label>
@@ -194,7 +202,7 @@ export function CreateArtifactModal({ nebulaId, onClose }: Props) {
                 value={caption}
                 placeholder="One line that holds the feeling"
                 maxLength={120}
-                onChange={(e) => setCaption(e.target.value)}
+                onChange={(e) => { setCaption(e.target.value); setGuardError(null); }}
               />
             </label>
 
@@ -205,6 +213,7 @@ export function CreateArtifactModal({ nebulaId, onClose }: Props) {
           </motion.div>
         )}
 
+        {guardError && <p className="content-guard-error">{guardError}</p>}
         <button className="btn btn--primary" disabled={!canSave} onClick={handleSave} style={{ marginTop: "4px" }}>
           Place in the nebula
         </button>

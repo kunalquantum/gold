@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { LightType, UnlockTrigger } from "../types";
+import { checkContent } from "../utils/contentGuard";
 import {
   FEELING_TRIGGERS,
   OCCASION_TRIGGERS,
@@ -36,6 +37,7 @@ export function LightComposer({
   const [content, setContent] = useState("");
   const [media, setMedia] = useState<string | undefined>();
   const [trigger, setTrigger] = useState<UnlockTrigger>("scared");
+  const [guardError, setGuardError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const { recording, error, start, stop } = useVoiceRecorder();
 
@@ -54,6 +56,11 @@ export function LightComposer({
 
   const send = () => {
     if (!ready) return;
+    if (content.trim()) {
+      const err = checkContent(content);
+      if (err) { setGuardError(err); return; }
+    }
+    setGuardError(null);
     addLight({
       senderId,
       type,
@@ -97,7 +104,7 @@ export function LightComposer({
           rows={2}
           placeholder={`What did ${senderName} say?  e.g. “Proud of you.”`}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => { setContent(e.target.value); setGuardError(null); }}
         />
       )}
 
@@ -137,7 +144,7 @@ export function LightComposer({
             className="field__input"
             placeholder="A caption — e.g. Still one of my favorite days."
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => { setContent(e.target.value); setGuardError(null); }}
           />
         </>
       )}
@@ -149,7 +156,7 @@ export function LightComposer({
             rows={2}
             placeholder="Write something for a moment that hasn't come yet…"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => { setContent(e.target.value); setGuardError(null); }}
           />
           <span className="field__label">Open this light…</span>
           <div className="chips">
@@ -167,6 +174,7 @@ export function LightComposer({
       )}
 
       {error && <p className="composer__error">{error}</p>}
+      {guardError && <p className="content-guard-error">{guardError}</p>}
 
       <div className="composer__row composer__row--end">
         <button className="btn btn--small" disabled={!ready} onClick={send}>

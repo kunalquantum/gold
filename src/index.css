@@ -3386,6 +3386,19 @@ canvas {
   border-radius: 3px;
 }
 
+/* ---------- Content Guard ---------- */
+.content-guard-error {
+  font-size: 12px;
+  color: var(--rose);
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 158, 205, 0.07);
+  border: 1px solid rgba(255, 158, 205, 0.18);
+  margin: 8px 0 4px;
+}
+
 /* ---------- Phase 8: Shared Universe ---------- */
 
 /* ── Stargazing Panel ── */

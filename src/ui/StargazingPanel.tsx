@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { CosmicReactionType, ConstellationId, SignalType, SignalVisibility } from "../types";
+import { checkContent, GUARD_MESSAGE } from "../utils/contentGuard";
 import {
   SIGNAL_TYPE_GLYPHS,
   SIGNAL_TYPE_LABELS,
@@ -47,6 +48,7 @@ export function StargazingPanel() {
   const [signalVisibility] = useState<SignalVisibility>("public");
   const [justSent, setJustSent] = useState(false);
   const [activeFilter, setActiveFilter] = useState<SignalType | "all">("all");
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   // Gather signals from others + seeds if needed
   const communitySignals = useMemo(() => {
@@ -83,6 +85,9 @@ export function StargazingPanel() {
 
   function handleSend() {
     if (!signalContent.trim()) return;
+    const err = checkContent(signalContent);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     addSignal({ type: signalType, content: signalContent.trim(), visibility: signalVisibility });
     setSignalContent("");
     setShowComposer(false);
@@ -257,7 +262,7 @@ export function StargazingPanel() {
                 <textarea
                   className="light-give__textarea"
                   value={signalContent}
-                  onChange={(e) => setSignalContent(e.target.value)}
+                  onChange={(e) => { setSignalContent(e.target.value); setGuardError(null); }}
                   placeholder={
                     signalType === "dream" ? "A dream you're holding..."
                     : signalType === "memory" ? "A moment worth keeping..."
@@ -268,10 +273,11 @@ export function StargazingPanel() {
                   maxLength={280}
                   autoFocus
                 />
+                {guardError && <p className="content-guard-error">{guardError}</p>}
                 <div className="light-give__composer-footer">
                   <span className="signal-composer__chars">{signalContent.length}/280</span>
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button className="btn--ghost" onClick={() => { setShowComposer(false); setSignalContent(""); }}>Cancel</button>
+                    <button className="btn--ghost" onClick={() => { setShowComposer(false); setSignalContent(""); setGuardError(null); }}>Cancel</button>
                     <button
                       className="btn btn--primary"
                       disabled={!signalContent.trim()}

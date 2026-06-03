@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import type { EmotionTag } from "../types";
 import { EMOTION_LABELS, EMOTION_PALETTES, EMOTION_GLYPHS } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 const EMOTIONS: EmotionTag[] = ["joy", "love", "proud", "adventure", "hope", "peace"];
 
@@ -14,11 +15,15 @@ export function CreateNebulaModal() {
 
   const [title, setTitle] = useState("");
   const [emotion, setEmotion] = useState<EmotionTag | null>(null);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   const canCreate = title.trim().length > 0 && emotion !== null;
 
   function handleCreate() {
     if (!emotion) return;
+    const err = checkContent(title);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     const nebula = addNebula({ title: title.trim(), emotion, participantIds: [selfId] });
     openOverlay({ kind: "nebulaInterior", nebulaId: nebula.id });
   }
@@ -56,7 +61,7 @@ export function CreateNebulaModal() {
             autoFocus
             placeholder="e.g. Goa Sunset, Dad's Stories, College Days"
             maxLength={60}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setGuardError(null); }}
             onKeyDown={(e) => { if (e.key === "Enter" && canCreate) handleCreate(); }}
           />
         </label>
@@ -95,9 +100,10 @@ export function CreateNebulaModal() {
           })}
         </div>
 
+        {guardError && <p className="content-guard-error" style={{ marginTop: "12px" }}>{guardError}</p>}
         <button
           className="btn btn--primary"
-          style={{ marginTop: "22px" }}
+          style={{ marginTop: "12px" }}
           disabled={!canCreate}
           onClick={handleCreate}
         >

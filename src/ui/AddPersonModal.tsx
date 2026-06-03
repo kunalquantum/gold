@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
 import { RELATIONSHIP_KINDS } from "../types";
 import { fileToDataUrl } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 // Bringing someone into your universe. Warm and simple — name, relationship,
 // and an optional face. Never a CRUD form.
@@ -14,6 +15,7 @@ export function AddPersonModal() {
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState<string>(RELATIONSHIP_KINDS[0]);
   const [photo, setPhoto] = useState<string | undefined>();
+  const [guardError, setGuardError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const canAdd = name.trim().length > 0;
@@ -25,6 +27,9 @@ export function AddPersonModal() {
 
   const submit = () => {
     if (!canAdd) return;
+    const err = checkContent(name);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     const person = addPerson({ name, relationship, photo });
     closeOverlay();
     focusPerson(person.id);
@@ -57,7 +62,7 @@ export function AddPersonModal() {
             autoFocus
             placeholder="e.g. Mom"
             maxLength={40}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setGuardError(null); }}
             onKeyDown={(e) => e.key === "Enter" && submit()}
           />
         </label>
@@ -78,6 +83,7 @@ export function AddPersonModal() {
           </div>
         </div>
 
+        {guardError && <p className="content-guard-error">{guardError}</p>}
         <button className="btn btn--primary" disabled={!canAdd} onClick={submit}>
           Place them in your sky
         </button>

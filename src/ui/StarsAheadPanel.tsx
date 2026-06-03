@@ -10,6 +10,7 @@ import {
   STAGE_LABELS,
   seedFrom,
 } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 // Journey stage order — survivorship is furthest ahead.
 const STAGE_ORDER: Record<string, number> = {
@@ -99,6 +100,7 @@ export function StarsAheadPanel() {
   const [nowText, setNowText] = useState(user?.journeyNow ?? "");
   const [showEchoComposer, setShowEchoComposer] = useState(false);
   const [justReceived, setJustReceived] = useState(false);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   const starsAhead = useMemo(() => {
     return others.filter((c) => {
@@ -134,6 +136,10 @@ export function StarsAheadPanel() {
   }
 
   function handleSaveEcho() {
+    const combined = [echoText, thenText, nowText].filter(Boolean).join(" ");
+    const err = checkContent(combined);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     setFutureEcho(echoText.trim());
     setJourneyNote(thenText.trim(), nowText.trim());
     setShowEchoComposer(false);
@@ -366,7 +372,7 @@ export function StarsAheadPanel() {
                               placeholder={`"If you're reading this, I know you're scared. Your story isn't over."`}
                               rows={4}
                               maxLength={320}
-                              onChange={(e) => setEchoText(e.target.value)}
+                              onChange={(e) => { setEchoText(e.target.value); setGuardError(null); }}
                             />
                           </label>
 
@@ -394,7 +400,8 @@ export function StarsAheadPanel() {
                           </div>
 
                           <div className="echo-composer__actions">
-                            <button className="btn--ghost" onClick={() => setShowEchoComposer(false)}>
+                            {guardError && <p className="content-guard-error">{guardError}</p>}
+                            <button className="btn--ghost" onClick={() => { setShowEchoComposer(false); setGuardError(null); }}>
                               Cancel
                             </button>
                             <button

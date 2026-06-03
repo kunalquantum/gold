@@ -7,6 +7,7 @@ import {
   WISDOM_CATEGORY_LABELS,
   STAGE_LABELS,
 } from "../utils";
+import { checkContent } from "../utils/contentGuard";
 
 const CATEGORIES: WisdomCategory[] = [
   "fear", "hope", "relationships", "work", "dreams", "recovery", "identity",
@@ -35,6 +36,7 @@ export function LibraryOfLight() {
   const [composerCategory, setComposerCategory] = useState<WisdomCategory>("fear");
   const [composerContent, setComposerContent] = useState("");
   const [composerAnon, setComposerAnon] = useState(false);
+  const [guardError, setGuardError] = useState<string | null>(null);
 
   // Collect all wisdom: community + mine
   const allWisdom = useMemo(() => {
@@ -60,6 +62,9 @@ export function LibraryOfLight() {
 
   function handleContribute() {
     if (!composerContent.trim()) return;
+    const err = checkContent(composerContent);
+    if (err) { setGuardError(err); return; }
+    setGuardError(null);
     addWisdom({
       category: composerCategory,
       content: composerContent.trim(),
@@ -178,13 +183,14 @@ export function LibraryOfLight() {
                 <textarea
                   className="light-give__textarea"
                   value={composerContent}
-                  onChange={(e) => setComposerContent(e.target.value)}
+                  onChange={(e) => { setComposerContent(e.target.value); setGuardError(null); }}
                   placeholder={`What would you say to someone facing ${WISDOM_CATEGORY_LABELS[composerCategory].toLowerCase()} right now?`}
                   rows={4}
                   maxLength={400}
                   autoFocus
                 />
 
+                {guardError && <p className="content-guard-error">{guardError}</p>}
                 <div className="light-give__composer-footer">
                   <label className="light-give__anon">
                     <input
@@ -195,7 +201,7 @@ export function LibraryOfLight() {
                     <span>Share anonymously</span>
                   </label>
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button className="btn--ghost" onClick={() => setShowComposer(false)}>Cancel</button>
+                    <button className="btn--ghost" onClick={() => { setShowComposer(false); setGuardError(null); }}>Cancel</button>
                     <button
                       className="btn btn--primary"
                       disabled={!composerContent.trim()}
