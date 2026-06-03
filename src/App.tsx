@@ -16,12 +16,15 @@ import { NebulaInterior } from "./three/NebulaInterior";
 import { CreateDreamModal } from "./ui/CreateDreamModal";
 import { DreamPanel } from "./ui/DreamPanel";
 import { StarsAheadPanel } from "./ui/StarsAheadPanel";
+import { LightIGivePanel } from "./ui/LightIGivePanel";
+import { LibraryOfLight } from "./ui/LibraryOfLight";
 
-// Positions items in a quarter-circle arc: straight up → pure left (from FAB at bottom-right)
+// Positions orbs in a quarter-circle arc: straight up → pure left (FAB is bottom-right).
+// Radius scales with item count to maintain comfortable spacing.
 function getOrbPos(index: number, total: number) {
-  const r = 96;
-  const startDeg = 90; // math 90° = up
-  const spread = total > 1 ? Math.min((total - 1) * 15, 90) : 0;
+  const r = total > 6 ? 120 : 100;
+  const startDeg = 90;
+  const spread = total > 1 ? Math.min((total - 1) * 14, 90) : 0;
   const deg = startDeg + (total > 1 ? (spread / (total - 1)) * index : 0);
   const rad = (deg * Math.PI) / 180;
   return { x: Math.round(r * Math.cos(rad)), y: -Math.round(r * Math.sin(rad)) };
@@ -90,6 +93,7 @@ export default function App() {
     const items: Orb[] = [];
     if (hasWaitingLight)
       items.push({ key: "door", icon: "✦", label: "When you need it", accent: "purple", action: () => openOverlay({ kind: "feelingDoor" }) });
+    items.push({ key: "lightIGive", icon: "✦", label: "Light I Give", accent: "gold", action: () => openOverlay({ kind: "lightIGive" }) });
     items.push({ key: "cosmos", icon: "✺", label: "The Cosmos", badge: population > 1 ? population : undefined, action: () => openOverlay({ kind: "community" }) });
     if (hasStarsAhead)
       items.push({ key: "stars", icon: "✦", label: "Stars Ahead", action: () => openOverlay({ kind: "starsAhead" }) });
@@ -224,6 +228,8 @@ export default function App() {
           <DreamPanel key={overlay.dreamId} dreamId={overlay.dreamId} />
         )}
         {overlay.kind === "starsAhead" && <StarsAheadPanel key="starsAhead" />}
+        {overlay.kind === "lightIGive" && <LightIGivePanel key="lightIGive" />}
+        {overlay.kind === "libraryOfLight" && <LibraryOfLight key="libraryOfLight" />}
       </AnimatePresence>
 
       <AnimatePresence>

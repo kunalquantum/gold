@@ -26,6 +26,8 @@ export class LocalRepository implements UniverseRepository {
         fragments: parsed.fragments ?? [],
         futureLetters: parsed.futureLetters ?? [],
         receivedEchoIds: parsed.receivedEchoIds ?? [],
+        givenLights: parsed.givenLights ?? [],
+        wisdom: parsed.wisdom ?? [],
         messages: parsed.messages ?? [],
       };
     } catch {
@@ -57,6 +59,7 @@ export class LocalRepository implements UniverseRepository {
         artifacts: data.artifacts,
         dreams: data.dreams,
         fragments: data.fragments,
+        wisdom: data.wisdom,
       },
     ];
   }

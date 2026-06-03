@@ -15,14 +15,15 @@ export function useWorld(): Citizen[] {
   const artifacts = useUniverseStore((s) => s.artifacts);
   const dreams = useUniverseStore((s) => s.dreams);
   const fragments = useUniverseStore((s) => s.fragments);
+  const wisdom = useUniverseStore((s) => s.wisdom);
   const others = useUniverseStore((s) => s.others);
 
   return useMemo<Citizen[]>(() => {
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments }
+      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom }
       : null;
     return self ? [self, ...others] : others;
-  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, others]);
+  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, others]);
 }
 
 // Find the citizen who owns a given person, and the person.

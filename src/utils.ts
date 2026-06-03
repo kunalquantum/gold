@@ -12,6 +12,7 @@ import type {
   RelationshipKind,
   UnlockTrigger,
   UserRole,
+  WisdomCategory,
 } from "./types";
 
 export const uid = (): string =>
@@ -378,6 +379,26 @@ export function dreamGalaxyPosition(
     ownerPos[2] + Math.sin(angle) * dist,
   ];
 }
+
+export const WISDOM_CATEGORY_LABELS: Record<WisdomCategory, string> = {
+  fear: "Fear",
+  hope: "Hope",
+  relationships: "Relationships",
+  work: "Work",
+  dreams: "Dreams",
+  recovery: "Recovery",
+  identity: "Identity",
+};
+
+export const WISDOM_CATEGORY_GLYPHS: Record<WisdomCategory, string> = {
+  fear: "◌",
+  hope: "✦",
+  relationships: "♡",
+  work: "◈",
+  dreams: "✨",
+  recovery: "◉",
+  identity: "◎",
+};
 
 export function formatDate(value?: string | number): string {
   if (!value) return "";

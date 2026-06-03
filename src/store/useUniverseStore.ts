@@ -6,6 +6,8 @@ import type {
   DreamStar,
   FutureLetter,
   FutureLetterTrigger,
+  GivenLight,
+  GivenLightType,
   Light,
   LightReaction,
   LightType,
@@ -17,6 +19,8 @@ import type {
   UnlockTrigger,
   UniverseData,
   UniverseUser,
+  WisdomCategory,
+  WisdomEntry,
 } from "../types";
 import { SELF_ID, emptyUniverse } from "../types";
 import { repository } from "../data/repository";
@@ -41,7 +45,9 @@ export type Overlay =
   | { kind: "nebulaInterior"; nebulaId: string }
   | { kind: "createDream" }
   | { kind: "dreamDetail"; dreamId: string }
-  | { kind: "starsAhead" };
+  | { kind: "starsAhead" }
+  | { kind: "lightIGive" }
+  | { kind: "libraryOfLight" };
 
 export interface NewLight {
   senderId: string;
@@ -66,6 +72,8 @@ interface UniverseState extends UniverseData {
   fragments: DreamFragment[];
   futureLetters: FutureLetter[];
   receivedEchoIds: string[];
+  givenLights: GivenLight[];
+  wisdom: WisdomEntry[];
 
   // Shared world
   selfId: string;
@@ -107,6 +115,10 @@ interface UniverseState extends UniverseData {
   setJourneyNote: (then: string, now: string) => void;
   receiveEcho: (fromOwnerId: string) => void;
 
+  sendGivenLight: (input: Omit<GivenLight, "id" | "createdAt">) => GivenLight;
+  addWisdom: (input: Omit<WisdomEntry, "id" | "createdAt">) => WisdomEntry;
+  setOpenToLight: (open: boolean) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -118,8 +130,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds } = get();
-  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds });
+  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom } = get();
+  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom });
 }
 
 function buildLight(input: NewLight): Light {
@@ -168,6 +180,8 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   fragments: [],
   futureLetters: [],
   receivedEchoIds: [],
+  givenLights: [],
+  wisdom: [],
 
   selfId: SELF,
   others: [],
@@ -187,6 +201,8 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       fragments: data.fragments ?? [],
       futureLetters: data.futureLetters ?? [],
       receivedEchoIds: data.receivedEchoIds ?? [],
+      givenLights: data.givenLights ?? [],
+      wisdom: data.wisdom ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -431,15 +447,34 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     persist(get);
   },
 
+  sendGivenLight: (input) => {
+    const light: GivenLight = { ...input, id: uid(), createdAt: Date.now() };
+    set((s) => ({ givenLights: [...s.givenLights, light] }));
+    persist(get);
+    return light;
+  },
+
+  addWisdom: (input) => {
+    const entry: WisdomEntry = { ...input, id: uid(), createdAt: Date.now() };
+    set((s) => ({ wisdom: [...s.wisdom, entry] }));
+    persist(get);
+    return entry;
+  },
+
+  setOpenToLight: (open) => {
+    set((s) => ({ user: s.user ? { ...s.user, openToLight: open } : s.user }));
+    persist(get);
+  },
+
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
 
   selfCitizen: () => {
-    const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments } = get();
+    const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments };
+    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom };
   },
 
   world: () => {

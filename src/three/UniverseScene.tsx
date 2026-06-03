@@ -10,6 +10,7 @@ import { System } from "./System";
 import { FloatingParticles } from "./FloatingParticles";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
+import { GivenLightBeams } from "./GivenLightBeams";
 import type { Citizen, Light, Person } from "../types";
 
 // Smoothly carries the camera across the galaxy: to a light being read, to a
@@ -88,6 +89,7 @@ function findPerson(world: Citizen[], personId: string) {
 export function UniverseScene() {
   const selfId = useUniverseStore((s) => s.selfId);
   const others = useUniverseStore((s) => s.others);
+  const givenLights = useUniverseStore((s) => s.givenLights);
   const user = useUniverseStore((s) => s.user);
   const people = useUniverseStore((s) => s.people);
   const lights = useUniverseStore((s) => s.lights);
@@ -115,8 +117,9 @@ export function UniverseScene() {
   // Build the rendered world: your live self plus every other citizen, with shared
   // nebulas and shared dreams injected into participant citizens.
   const world = useMemo<Citizen[]>(() => {
+    const wisdom = useUniverseStore.getState().wisdom;
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments }
+      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom }
       : null;
     const raw = self ? [self, ...others] : others;
 
@@ -191,6 +194,7 @@ export function UniverseScene() {
       <Nebula />
       <Starfield />
       <FloatingParticles />
+      <GivenLightBeams selfId={selfId} givenLights={givenLights} />
 
       {world.map((citizen) => (
         <System

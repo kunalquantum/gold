@@ -95,6 +95,42 @@ export interface FutureLetter {
   openedAt?: number;
 }
 
+// ─── Phase 7: Light I Give ────────────────────────────────────────────────────
+// The moment a person discovers they can contribute — giving light to those
+// still finding their way. Not because they are experts. Because they are human.
+
+export type WisdomCategory =
+  | "fear"
+  | "hope"
+  | "relationships"
+  | "work"
+  | "dreams"
+  | "recovery"
+  | "identity";
+
+export type GivenLightType = "encouragement" | "story" | "advice";
+
+// A piece of human wisdom shared with the Library of Light.
+export interface WisdomEntry {
+  id: string;
+  category: WisdomCategory;
+  content: string;
+  fromStage?: string;
+  anonymous: boolean;
+  createdAt: number;
+}
+
+// A light sent from one community member to another.
+// Private — stored in UniverseData only, never included in Citizen.
+export interface GivenLight {
+  id: string;
+  toOwnerId: string;
+  type: GivenLightType;
+  content: string;
+  anonymous: boolean;
+  createdAt: number;
+}
+
 export type RelationshipKind =
   | "Mother"
   | "Father"
@@ -189,9 +225,11 @@ export interface UniverseUser {
   stage?: JourneyStage;
   isPublic?: boolean;
   // Phase 6: Stars Ahead — public profile story
-  journeyThen?: string; // brief note on where they were
-  journeyNow?: string;  // brief note on where they are now
-  futureEcho?: string;  // a message left for people behind them
+  journeyThen?: string;
+  journeyNow?: string;
+  futureEcho?: string;
+  // Phase 7: Light I Give — opt in to receive light from community
+  openToLight?: boolean;
 }
 
 // One person's whole presence in the shared universe — their star and the
@@ -207,6 +245,7 @@ export interface Citizen {
   artifacts: MemoryArtifact[];
   dreams: DreamStar[];
   fragments: DreamFragment[];
+  wisdom: WisdomEntry[];
 }
 
 export interface LegacyMessage {
@@ -229,8 +268,10 @@ export interface UniverseData {
   artifacts: MemoryArtifact[];
   dreams: DreamStar[];
   fragments: DreamFragment[];
-  futureLetters: FutureLetter[]; // private — never included in Citizen/world
-  receivedEchoIds: string[];     // ownerIds of people whose future echo was received
+  futureLetters: FutureLetter[];
+  receivedEchoIds: string[];
+  givenLights: GivenLight[];    // private — lights I've sent to others
+  wisdom: WisdomEntry[];         // public — my Library of Light contributions
   messages?: LegacyMessage[];
 }
 
@@ -246,4 +287,6 @@ export const emptyUniverse = (): UniverseData => ({
   fragments: [],
   futureLetters: [],
   receivedEchoIds: [],
+  givenLights: [],
+  wisdom: [],
 });
