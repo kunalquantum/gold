@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUniverseStore } from "./store/useUniverseStore";
 import { useAuthStore } from "./data/auth";
@@ -21,9 +21,24 @@ import { LibraryOfLight } from "./ui/LibraryOfLight";
 import { StargazingPanel } from "./ui/StargazingPanel";
 import { ConstellationsPanel } from "./ui/ConstellationsPanel";
 
-// Positions orbs in a quarter-circle arc: straight up → pure left (FAB is bottom-right).
-// Radius scales with item count to maintain comfortable spacing.
-function getOrbPos(index: number, total: number) {
+function useIsMobile() {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia("(max-width: 640px)");
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia("(max-width: 640px)").matches,
+    () => false,
+  );
+}
+
+// Desktop: quarter-circle arc straight up → pure left. Mobile: vertical stack above button.
+function getOrbPos(index: number, total: number, mobile: boolean) {
+  if (mobile) {
+    const gap = 52;
+    return { x: 0, y: -(gap * (index + 1)) };
+  }
   const r = total > 6 ? 120 : 100;
   const startDeg = 90;
   const spread = total > 1 ? Math.min((total - 1) * 14, 90) : 0;
@@ -54,6 +69,7 @@ export default function App() {
   const signOut = useAuthStore((s) => s.signOut);
 
   const [fabOpen, setFabOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Auth resolves first; universe loads only once we know who the user is.
   useEffect(() => {
@@ -186,7 +202,7 @@ export default function App() {
               <div className="universe-fab__field">
                 <AnimatePresence>
                   {fabOpen && fabItems.map((item, i) => {
-                    const { x, y } = getOrbPos(i, fabItems.length);
+                    const { x, y } = getOrbPos(i, fabItems.length, isMobile);
                     return (
                       <motion.button
                         key={item.key}

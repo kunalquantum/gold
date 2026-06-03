@@ -3705,3 +3705,109 @@ canvas {
   color: var(--rose);
   background: transparent;
 }
+
+/* ─────────────────────────── Mobile / touch ─────────────────────────── */
+@media (max-width: 640px) {
+  /* HUD: tighter padding, smaller title, hide account email to save space */
+  .hud {
+    padding: 16px 18px;
+  }
+  .hud__title {
+    font-size: 17px;
+  }
+  .hud__hint {
+    font-size: 11px;
+  }
+  .hud__account-email {
+    display: none;
+  }
+
+  /* FAB: respect iOS home-bar safe area; move closer to edge */
+  .universe-fab {
+    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    right: 20px;
+  }
+
+  /* Orbs: slightly smaller on mobile to avoid overflow */
+  .fab-orb {
+    width: 40px;
+    height: 40px;
+    left: 6px;
+    top: 6px;
+  }
+  .universe-fab__field {
+    width: 52px;
+    height: 52px;
+  }
+
+  /* Labels: always visible on touch (hover doesn't exist) */
+  .fab-orb__label {
+    opacity: 1;
+    font-size: 10px;
+    padding: 3px 9px;
+  }
+
+  /* Stack goes upward — label is to the left of each orb; make sure it doesn't
+     clip off the right edge when stack is vertical (x=0, label is right:calc) */
+  .fab-orb__label {
+    right: calc(100% + 7px);
+  }
+
+  /* Panels: reduced side padding, touch-friendly scroll, safe-area bottom */
+  .panel {
+    padding: 20px 16px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    -webkit-overflow-scrolling: touch;
+  }
+  .panel__body {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modals / full-screen overlays: use almost full width */
+  .modal, .add-modal, .milestone-modal, .nebula-modal, .dream-modal,
+  .library-modal, .letter-modal, .feeling-door {
+    width: 96vw !important;
+    padding: 24px 18px !important;
+  }
+
+  /* Composer footer: stack send button below the text row */
+  .composer__row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Community panel grid: single column on small screens */
+  .community-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Constellation grid already collapses at 480px; widen the breakpoint */
+  .constellation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stars-ahead list: reduce horizontal padding */
+  .stars-ahead-panel {
+    padding: 20px 16px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  }
+
+  /* Stargazing panel: ensure composer actions stack */
+  .stargazing-panel {
+    padding: 20px 16px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  }
+  .signal-composer__actions,
+  .echo-composer__actions,
+  .letter-composer__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* First-invite button: smaller text */
+  .first-invite {
+    font-size: 13px;
+    padding: 14px 22px;
+    bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 80px));
+  }
+}
