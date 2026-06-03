@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AdaptiveDpr, OrbitControls } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
@@ -23,6 +23,10 @@ function CameraRig() {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const up08 = useMemo(() => new THREE.Vector3(0, 0.8, 0), []);
   const up25 = useMemo(() => new THREE.Vector3(0, 2.5, 0), []);
+  // Tracks whether the camera has finished its fly-to and settled at the
+  // current idle position. Once settled, the rig stops fighting manual zoom/pan.
+  const settled = useRef(false);
+  const prevKey = useRef("");
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
@@ -30,6 +34,13 @@ function CameraRig() {
     const { selectedCitizenId, focusedPersonId, openedLightId } = store;
 
     const ownerPos = (ownerId: string) => galaxyPosition(ownerId);
+
+    // Any selection change resets the settled flag so we fly to the new target.
+    const key = `${selectedCitizenId}|${focusedPersonId ?? ""}|${openedLightId ?? ""}`;
+    if (key !== prevKey.current) {
+      prevKey.current = key;
+      settled.current = false;
+    }
 
     let close = false;
 
@@ -57,15 +68,23 @@ function CameraRig() {
       desired.copy(target).addScaledVector(tmp, 6).add(up25);
       close = true;
     } else {
+      // Idle: only lerp until we've reached the target; after that let the
+      // user zoom / pan freely without the rig fighting them.
+      if (settled.current) return;
       const [bx, by, bz] = ownerPos(selectedCitizenId);
       target.set(bx, by, bz);
       desired.set(bx, by + 12, bz + 34);
     }
 
-    camera.position.lerp(desired, close ? 0.045 : 0.03);
+    camera.position.lerp(desired, close ? 0.045 : 0.06);
     if (controls) {
-      controls.target.lerp(target, close ? 0.07 : 0.05);
+      controls.target.lerp(target, close ? 0.07 : 0.08);
       controls.update();
+    }
+
+    // Settle once camera is within 0.5 units of the idle target.
+    if (!close && camera.position.distanceToSquared(desired) < 0.25) {
+      settled.current = true;
     }
   });
 
@@ -232,7 +251,7 @@ export function UniverseScene() {
         zoomSpeed={0.7}
         panSpeed={0.5}
         minDistance={5}
-        maxDistance={520}
+        maxDistance={1800}
       />
       <CameraRig />
       <AdaptiveDpr pixelated />

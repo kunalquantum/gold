@@ -262,6 +262,29 @@ canvas {
 .hud__signout:hover {
   color: var(--rose);
 }
+.hud__home {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 122, 0.22);
+  background: rgba(8, 6, 22, 0.6);
+  backdrop-filter: blur(10px);
+  color: var(--gold-soft);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s, background 0.25s;
+  width: fit-content;
+}
+.hud__home:hover {
+  border-color: rgba(255, 210, 122, 0.5);
+  color: var(--gold);
+  background: rgba(14, 10, 30, 0.7);
+}
 .add-btn {
   pointer-events: auto;
   display: inline-flex;

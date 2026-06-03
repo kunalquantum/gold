@@ -61,6 +61,7 @@ export default function App() {
   const load = useUniverseStore((s) => s.load);
   const openOverlay = useUniverseStore((s) => s.openOverlay);
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
+  const focusPerson = useUniverseStore((s) => s.focusPerson);
   const syncStatus = useUniverseStore((s) => s.syncStatus);
 
   const authStatus = useAuthStore((s) => s.status);
@@ -147,6 +148,12 @@ export default function App() {
               <>
                 <span className="hud__title">{exploring.user.name}&#8217;s universe</span>
                 <span className="hud__hint">You&#8217;re visiting · click a planet or light to explore</span>
+                <button
+                  className="hud__home"
+                  onClick={() => { selectCitizen(selfId); focusPerson(null); }}
+                >
+                  ◉ My sky
+                </button>
               </>
             ) : (
               <>
@@ -161,6 +168,12 @@ export default function App() {
                     </span>
                   )}
                 </span>
+                <button
+                  className="hud__home"
+                  onClick={() => { selectCitizen(selfId); focusPerson(null); }}
+                >
+                  ◉ Re-centre
+                </button>
                 {authStatus === "authenticated" && userEmail && (
                   <div className="hud__account">
                     <span className="hud__account-dot" />
@@ -186,7 +199,7 @@ export default function App() {
       {/* Radial orb fan — bottom right */}
       {user && overlay.kind !== "onboarding" && (
         <>
-          {fabOpen && !exploring && (
+          {fabOpen && (
             <div
               style={{ position: "fixed", inset: 0, zIndex: 19 }}
               onClick={() => setFabOpen(false)}
@@ -194,12 +207,7 @@ export default function App() {
           )}
 
           <div className="universe-fab">
-            {exploring ? (
-              <button className="universe-fab__return" onClick={() => selectCitizen(selfId)}>
-                ← Return home
-              </button>
-            ) : (
-              <div className="universe-fab__field">
+            <div className="universe-fab__field">
                 <AnimatePresence>
                   {fabOpen && fabItems.map((item, i) => {
                     const { x, y } = getOrbPos(i, fabItems.length, isMobile);
@@ -231,7 +239,6 @@ export default function App() {
                   <span className="universe-fab__glyph">✦</span>
                 </button>
               </div>
-            )}
           </div>
         </>
       )}
