@@ -31,12 +31,12 @@ function CameraRig() {
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     const store = useUniverseStore.getState();
-    const { selectedCitizenId, focusedPersonId, openedLightId } = store;
+    const { selectedCitizenId, focusedPersonId, openedLightId, recentreSeq } = store;
 
     const ownerPos = (ownerId: string) => galaxyPosition(ownerId);
 
-    // Any selection change resets the settled flag so we fly to the new target.
-    const key = `${selectedCitizenId}|${focusedPersonId ?? ""}|${openedLightId ?? ""}`;
+    // Any selection change — or explicit recentre() — resets settled so we fly.
+    const key = `${selectedCitizenId}|${focusedPersonId ?? ""}|${openedLightId ?? ""}|${recentreSeq}`;
     if (key !== prevKey.current) {
       prevKey.current = key;
       settled.current = false;

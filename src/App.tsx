@@ -62,6 +62,7 @@ export default function App() {
   const openOverlay = useUniverseStore((s) => s.openOverlay);
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
   const focusPerson = useUniverseStore((s) => s.focusPerson);
+  const recentre = useUniverseStore((s) => s.recentre);
   const syncStatus = useUniverseStore((s) => s.syncStatus);
 
   const authStatus = useAuthStore((s) => s.status);
@@ -170,7 +171,7 @@ export default function App() {
                 </span>
                 <button
                   className="hud__home"
-                  onClick={() => { selectCitizen(selfId); focusPerson(null); }}
+                  onClick={() => recentre()}
                 >
                   ◉ Re-centre
                 </button>

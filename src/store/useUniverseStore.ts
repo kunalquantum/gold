@@ -94,8 +94,10 @@ interface UniverseState extends UniverseData {
   others: Citizen[]; // every other citizen, from the cloud (live)
   selectedCitizenId: string; // whose system the camera is exploring
   syncStatus: SyncStatus; // real-time channel health
+  recentreSeq: number;   // incremented by recentre() to force a camera fly-back
 
   load: () => Promise<void>;
+  recentre: () => void;
   loadWorld: () => Promise<void>;
   setUser: (user: UniverseUser) => void;
 
@@ -213,6 +215,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   others: [],
   selectedCitizenId: SELF,
   syncStatus: "connecting" as SyncStatus,
+  recentreSeq: 0,
 
   load: async () => {
     const data = await repository.load();
@@ -560,6 +563,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
+  recentre: () => set((s) => ({ selectedCitizenId: SELF, focusedPersonId: null, recentreSeq: s.recentreSeq + 1 })),
 
   selfCitizen: () => {
     const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations } = get();
