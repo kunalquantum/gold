@@ -5,6 +5,7 @@ import type { Citizen, Light, Person } from "../types";
 import { StarBody } from "./StarBody";
 import { PersonBody } from "./PersonBody";
 import { SystemLights } from "./LightField";
+import { NebulaMesh } from "./NebulaMesh";
 
 interface Props {
   citizen: Citizen;
@@ -14,10 +15,10 @@ interface Props {
   onSelectStar: (citizen: Citizen) => void;
   onSelectPerson: (person: Person, citizen: Citizen) => void;
   onOpenLight: (light: Light, citizen: Citizen) => void;
+  onEnterNebula: (nebulaId: string) => void;
 }
 
-// One citizen's solar system, placed at their stable home in the galaxy: their
-// star, the people who orbit them, and (when you're there) the light around them.
+// One citizen's solar system: their star, orbiting people, lights, and nearby nebulas.
 export function System({
   citizen,
   isSelf,
@@ -26,11 +27,11 @@ export function System({
   onSelectStar,
   onSelectPerson,
   onOpenLight,
+  onEnterNebula,
 }: Props) {
   const focusedPersonId = useUniverseStore((s) => s.focusedPersonId);
   const pos = useMemo(() => galaxyPosition(citizen.ownerId), [citizen.ownerId]);
   const dimmed = anySelection && !selected;
-  // Show the full system (lights) for your own star and whichever you visit.
   const showLights = selected || isSelf;
 
   return (
@@ -61,6 +62,17 @@ export function System({
           onOpen={(l) => onOpenLight(l, citizen)}
         />
       )}
+
+      {/* Memory nebulas float near this citizen's star */}
+      {citizen.nebulas.map((nebula) => (
+        <NebulaMesh
+          key={nebula.id}
+          nebula={nebula}
+          ownerPos={pos}
+          artifactCount={citizen.artifacts.filter((a) => a.nebulaId === nebula.id).length}
+          onEnter={onEnterNebula}
+        />
+      ))}
     </group>
   );
 }

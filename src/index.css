@@ -1386,6 +1386,348 @@ canvas {
   letter-spacing: 0.2px;
 }
 
+/* ---------- Phase 4: Memory Nebulas ---------- */
+
+/* Nebula in-universe label */
+.nebula-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(8, 10, 24, 0.55);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink-soft);
+  user-select: none;
+  transition: border-color 0.4s, color 0.4s;
+}
+.nebula-label--hover {
+  color: var(--ink);
+  border-color: rgba(255, 210, 122, 0.4);
+}
+.nebula-label__glyph {
+  font-size: 13px;
+}
+.nebula-label__name {
+  letter-spacing: 0.3px;
+}
+.nebula-label__count {
+  font-family: var(--sans);
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-faint);
+}
+
+/* Artifact in-nebula label */
+.artifact-label {
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(4, 6, 18, 0.6);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nebula HUD button */
+.nebula-hud-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 162, 255, 0.3);
+  background: rgba(22, 16, 44, 0.55);
+  color: var(--purple);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.4s, transform 0.3s;
+}
+.nebula-hud-btn:hover {
+  border-color: rgba(200, 162, 255, 0.6);
+  transform: translateY(-1px);
+}
+.nebula-hud-btn__glyph {
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+/* Nebula interior full-screen canvas wrapper */
+.nebula-interior {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+}
+.nebula-interior__hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.nebula-interior__nav {
+  pointer-events: auto;
+}
+.nebula-interior__back {
+  pointer-events: auto;
+  background: rgba(8, 10, 24, 0.55);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  color: var(--ink-soft);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.3s, border-color 0.3s;
+}
+.nebula-interior__back:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.nebula-interior__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.nebula-interior__glyph {
+  font-size: 22px;
+}
+.nebula-interior__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 28px;
+  color: var(--ink);
+  text-shadow: 0 0 30px rgba(255,255,255,0.15);
+}
+.nebula-interior__empty {
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--ink-faint);
+  max-width: 300px;
+  line-height: 1.6;
+}
+.nebula-interior__add {
+  pointer-events: auto;
+  margin-top: auto;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.6);
+  color: var(--ink);
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.35s, background 0.35s, transform 0.3s;
+}
+.nebula-interior__add:hover {
+  transform: translateY(-1px);
+  background: rgba(14, 16, 36, 0.75);
+}
+
+/* Create Nebula — emotion grid */
+.emotion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.emotion-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.5);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+}
+.emotion-card:hover {
+  transform: translateY(-2px);
+}
+.emotion-card__glyph {
+  font-size: 22px;
+  line-height: 1;
+  transition: color 0.3s;
+}
+.emotion-card__label {
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--ink-soft);
+}
+.emotion-card__preview {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Artifact type selector row */
+.artifact-type-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.artifact-type-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(8, 10, 24, 0.5);
+  color: var(--ink-faint);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.artifact-type-tab--active {
+  color: #1a1206;
+  background: linear-gradient(135deg, var(--gold), #f7b267);
+  border-color: transparent;
+}
+.artifact-type-tab__glyph {
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* Artifact immersive viewer */
+.artifact-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 3, 10, 0.72);
+  backdrop-filter: blur(8px);
+}
+.artifact-viewer {
+  position: relative;
+  width: min(520px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 44px 38px 32px;
+  text-align: center;
+  border-radius: 28px;
+  background: radial-gradient(130% 90% at 50% 0%, rgba(28, 24, 56, 0.96), rgba(6, 8, 22, 0.98));
+  border: 1px solid var(--line);
+  box-shadow: 0 0 80px color-mix(in srgb, var(--glow, #c8a2ff) 25%, transparent), 0 30px 90px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+}
+.artifact-viewer__halo {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  opacity: 0.3;
+  pointer-events: none;
+  filter: blur(8px);
+}
+.artifact-viewer__origin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--ink-faint);
+  margin-bottom: 22px;
+}
+.artifact-viewer__photo {
+  width: 100%;
+  border-radius: 18px;
+  display: block;
+  margin-bottom: 20px;
+}
+.artifact-viewer__video {
+  width: 100%;
+  border-radius: 18px;
+  display: block;
+  margin-bottom: 20px;
+}
+.artifact-viewer__voice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.voice-orb {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(139, 232, 216, 0.12);
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(139, 232, 216, 0.3);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.artifact-viewer__audio {
+  width: 100%;
+}
+.artifact-viewer__story {
+  font-family: var(--display);
+  font-size: 20px;
+  line-height: 1.7;
+  color: var(--ink);
+  text-align: left;
+  white-space: pre-wrap;
+  margin-bottom: 22px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.artifact-viewer__caption {
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.artifact-viewer__date {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+
 /* ---------- Scrollbars ---------- */
 .panel__body::-webkit-scrollbar,
 .modal::-webkit-scrollbar {

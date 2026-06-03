@@ -93,6 +93,8 @@ export function UniverseScene() {
   const lights = useUniverseStore((s) => s.lights);
   const memories = useUniverseStore((s) => s.memories);
   const milestones = useUniverseStore((s) => s.milestones);
+  const nebulas = useUniverseStore((s) => s.nebulas);
+  const artifacts = useUniverseStore((s) => s.artifacts);
   const selectedCitizenId = useUniverseStore((s) => s.selectedCitizenId);
 
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
@@ -100,13 +102,17 @@ export function UniverseScene() {
   const openLight = useUniverseStore((s) => s.openLight);
   const openOverlay = useUniverseStore((s) => s.openOverlay);
 
+  const handleEnterNebula = (nebulaId: string) => {
+    openOverlay({ kind: "nebulaInterior", nebulaId });
+  };
+
   // Build the rendered world: your live self plus every other citizen.
   const world = useMemo<Citizen[]>(() => {
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories, milestones }
+      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts }
       : null;
     return self ? [self, ...others] : others;
-  }, [selfId, user, people, lights, memories, milestones, others]);
+  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, others]);
 
   const anySelection = world.length > 1;
 
@@ -148,6 +154,7 @@ export function UniverseScene() {
           onSelectStar={handleSelectStar}
           onSelectPerson={handleSelectPerson}
           onOpenLight={handleOpenLight}
+          onEnterNebula={handleEnterNebula}
         />
       ))}
 

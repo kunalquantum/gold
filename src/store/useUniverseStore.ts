@@ -5,6 +5,8 @@ import type {
   LightReaction,
   LightType,
   Memory,
+  MemoryArtifact,
+  MemoryNebula,
   Milestone,
   Person,
   UnlockTrigger,
@@ -29,7 +31,9 @@ export type Overlay =
   | { kind: "personDetail"; personId: string }
   | { kind: "feelingDoor" }
   | { kind: "community" }
-  | { kind: "milestone" };
+  | { kind: "milestone" }
+  | { kind: "createNebula" }
+  | { kind: "nebulaInterior"; nebulaId: string };
 
 export interface NewLight {
   senderId: string;
@@ -48,6 +52,8 @@ interface UniverseState extends UniverseData {
   openedLightId: string | null;
   arriving: string[];
   milestones: Milestone[];
+  nebulas: MemoryNebula[];
+  artifacts: MemoryArtifact[];
 
   // Shared world
   selfId: string;
@@ -74,6 +80,10 @@ interface UniverseState extends UniverseData {
   setPrivacy: (isPublic: boolean) => void;
   setRoleAndStage: (updates: Pick<UniverseUser, "role" | "stage">) => void;
 
+  addNebula: (input: Omit<MemoryNebula, "id" | "createdAt" | "echoCount">) => MemoryNebula;
+  addArtifact: (input: Omit<MemoryArtifact, "id" | "createdAt">) => MemoryArtifact;
+  echoNebula: (nebulaId: string) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -85,8 +95,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories, milestones } = get();
-  void repository.save({ user, people, lights, memories, milestones });
+  const { user, people, lights, memories, milestones, nebulas, artifacts } = get();
+  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts });
 }
 
 function buildLight(input: NewLight): Light {
@@ -141,6 +151,8 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       people: data.people,
       memories: data.memories,
       milestones: data.milestones ?? [],
+      nebulas: data.nebulas ?? [],
+      artifacts: data.artifacts ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -270,15 +282,38 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     persist(get);
   },
 
+  addNebula: (input) => {
+    const nebula: MemoryNebula = { ...input, id: uid(), createdAt: Date.now(), echoCount: 0 };
+    set((s) => ({ nebulas: [...s.nebulas, nebula] }));
+    persist(get);
+    return nebula;
+  },
+
+  addArtifact: (input) => {
+    const artifact: MemoryArtifact = { ...input, id: uid(), createdAt: Date.now() };
+    set((s) => ({ artifacts: [...s.artifacts, artifact] }));
+    persist(get);
+    return artifact;
+  },
+
+  echoNebula: (nebulaId) => {
+    set((s) => ({
+      nebulas: s.nebulas.map((n) =>
+        n.id === nebulaId ? { ...n, echoCount: n.echoCount + 1 } : n,
+      ),
+    }));
+    persist(get);
+  },
+
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
 
   selfCitizen: () => {
-    const { user, people, lights, memories, milestones } = get();
+    const { user, people, lights, memories, milestones, nebulas, artifacts } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories, milestones };
+    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts };
   },
 
   world: () => {

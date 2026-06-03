@@ -9,6 +9,8 @@ import { LightLetter } from "./ui/LightLetter";
 import { FeelingDoor } from "./ui/FeelingDoor";
 import { CommunityPanel } from "./ui/CommunityPanel";
 import { MilestoneModal } from "./ui/MilestoneModal";
+import { CreateNebulaModal } from "./ui/CreateNebulaModal";
+import { NebulaInterior } from "./three/NebulaInterior";
 
 export default function App() {
   const loaded = useUniverseStore((s) => s.loaded);
@@ -43,6 +45,8 @@ export default function App() {
 
   const isSurvivor = user?.role === "survivor";
   const milestonesCount = milestones.length;
+  const nebulasCount = useUniverseStore((s) => s.nebulas).length;
+  const inNebula = overlay.kind === "nebulaInterior";
 
   if (!loaded) {
     return <div className="boot" />;
@@ -50,7 +54,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <UniverseScene />
+      {!inNebula && <UniverseScene />}
 
       {user && overlay.kind !== "onboarding" && (
         <div className="hud">
@@ -110,6 +114,15 @@ export default function App() {
                   </button>
                 )}
 
+                <button
+                  className="nebula-hud-btn"
+                  onClick={() => openOverlay({ kind: "createNebula" })}
+                  title="Create a memory place"
+                >
+                  <span className="nebula-hud-btn__glyph">☁</span>
+                  {nebulasCount > 0 ? `${nebulasCount} Nebula${nebulasCount === 1 ? "" : "s"}` : "New Memory"}
+                </button>
+
                 <button className="add-btn" onClick={() => openOverlay({ kind: "addPerson" })} title="Add someone">
                   <span>+</span>
                   Add someone
@@ -129,6 +142,10 @@ export default function App() {
         )}
         {overlay.kind === "community" && <CommunityPanel key="community" />}
         {overlay.kind === "milestone" && <MilestoneModal key="milestone" />}
+        {overlay.kind === "createNebula" && <CreateNebulaModal key="createNebula" />}
+        {overlay.kind === "nebulaInterior" && (
+          <NebulaInterior key={overlay.nebulaId} nebulaId={overlay.nebulaId} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>

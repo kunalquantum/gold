@@ -26,6 +26,34 @@ export interface Milestone {
   isPublic: boolean;
 }
 
+// ─── Phase 4: Memory Nebulas ─────────────────────────────────────────────────
+// Nebulas are places, not galleries. Each is a chapter of life shaped by a
+// single emotion, filled with artifacts that float like stars inside a cloud.
+
+export type EmotionTag = "joy" | "love" | "proud" | "adventure" | "hope" | "peace";
+
+export type ArtifactType = "photo" | "voice" | "story" | "video";
+
+export interface MemoryNebula {
+  id: string;
+  title: string;
+  emotion: EmotionTag;
+  createdAt: number;
+  echoCount: number;
+  participantIds: string[]; // other ownerIds who co-own this memory place
+}
+
+export interface MemoryArtifact {
+  id: string;
+  nebulaId: string;
+  type: ArtifactType;
+  content: string; // text (story) or data URL (photo/voice/video)
+  caption: string;
+  date: string; // ISO date
+  createdAt: number;
+  linkedArtifactId?: string; // memory trail link
+}
+
 export type RelationshipKind =
   | "Mother"
   | "Father"
@@ -147,6 +175,8 @@ export interface Citizen {
   lights: Light[];
   memories: Memory[];
   milestones: Milestone[];
+  nebulas: MemoryNebula[];
+  artifacts: MemoryArtifact[];
 }
 
 // Legacy Phase 1 message shape — kept only so existing data can be migrated
@@ -167,6 +197,8 @@ export interface UniverseData {
   lights: Light[];
   memories: Memory[];
   milestones: Milestone[];
+  nebulas: MemoryNebula[];
+  artifacts: MemoryArtifact[];
   messages?: LegacyMessage[]; // legacy; migrated then ignored
 }
 
@@ -176,4 +208,6 @@ export const emptyUniverse = (): UniverseData => ({
   lights: [],
   memories: [],
   milestones: [],
+  nebulas: [],
+  artifacts: [],
 });

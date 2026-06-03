@@ -1,4 +1,6 @@
 import type {
+  ArtifactType,
+  EmotionTag,
   JourneyStage,
   LightForm,
   LightReaction,
@@ -205,6 +207,81 @@ const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 // summons the moment it was kept for (emotions/occasions, via the door).
 export function unlockTimeFor(trigger: UnlockTrigger, from: number): number | undefined {
   return trigger === "one_year" ? from + YEAR_MS : undefined;
+}
+
+// ─── Phase 4: Memory Nebulas ─────────────────────────────────────────────────
+
+export interface EmotionPalette {
+  primary: string;
+  secondary: string;
+  glow: string;
+  bg: string; // interior background tint
+}
+
+export const EMOTION_PALETTES: Record<EmotionTag, EmotionPalette> = {
+  joy:       { primary: "#ffd27a", secondary: "#f7b267", glow: "#ffb347", bg: "#080500" },
+  love:      { primary: "#ff9ecd", secondary: "#ffd27a", glow: "#ff6eb4", bg: "#080104" },
+  proud:     { primary: "#ffd27a", secondary: "#eaeaf2", glow: "#ffe9b8", bg: "#080700" },
+  adventure: { primary: "#9bb8ff", secondary: "#c8a2ff", glow: "#7090ee", bg: "#010408" },
+  hope:      { primary: "#8be8d8", secondary: "#ffd27a", glow: "#5ecfba", bg: "#010806" },
+  peace:     { primary: "#aabfff", secondary: "#d0deff", glow: "#6080cc", bg: "#010408" },
+};
+
+export const EMOTION_LABELS: Record<EmotionTag, string> = {
+  joy: "Joy", love: "Love", proud: "Proud",
+  adventure: "Adventure", hope: "Hope", peace: "Peace",
+};
+
+export const EMOTION_GLYPHS: Record<EmotionTag, string> = {
+  joy: "✦", love: "♡", proud: "★",
+  adventure: "◈", hope: "✧", peace: "◎",
+};
+
+export interface ArtifactDef {
+  type: ArtifactType;
+  label: string;
+  glyph: string;
+  description: string;
+}
+
+export const ARTIFACT_DEFS: ArtifactDef[] = [
+  { type: "photo",  label: "Photo",         glyph: "◇", description: "A glowing crystal" },
+  { type: "voice",  label: "Voice memory",  glyph: "◉", description: "A floating sound orb" },
+  { type: "story",  label: "Written story", glyph: "≡", description: "An ancient scroll" },
+  { type: "video",  label: "Video",         glyph: "▷", description: "A moving light prism" },
+];
+
+// Position of a memory nebula near its owner's solar system.
+// Nebulas float 22–42 units from the owner star — beyond the planetary system.
+export function nebulaGalaxyPosition(
+  nebulaId: string,
+  ownerPos: [number, number, number],
+): [number, number, number] {
+  const h1 = hashId(nebulaId + "::na");
+  const h2 = hashId(nebulaId + "::nb");
+  const h3 = hashId(nebulaId + "::nc");
+  const dist = 22 + h1 * 20;
+  const angle = h2 * Math.PI * 2;
+  return [
+    ownerPos[0] + Math.cos(angle) * dist,
+    ownerPos[1] + (h3 - 0.5) * 14,
+    ownerPos[2] + Math.sin(angle) * dist,
+  ];
+}
+
+// Stable floating position of an artifact inside a nebula (local space, centered at origin).
+export function artifactInteriorPosition(artifactId: string): [number, number, number] {
+  const h1 = hashId(artifactId + "::ix");
+  const h2 = hashId(artifactId + "::iy");
+  const h3 = hashId(artifactId + "::iz");
+  const phi = Math.acos(2 * h2 - 1);
+  const theta = h1 * Math.PI * 2;
+  const r = 3 + h3 * 8;
+  return [
+    r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi) * 0.45,
+    r * Math.sin(phi) * Math.sin(theta),
+  ];
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
