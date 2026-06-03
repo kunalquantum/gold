@@ -4,6 +4,10 @@ import { makeSupabaseRepository } from "./supabaseRepository";
 
 export type SyncStatus = "connecting" | "live" | "reconnecting" | "offline";
 
+// How many citizens are fetched per loadWorld() call. The store auto-fetches
+// subsequent pages in the background until the world is fully loaded.
+export const WORLD_PAGE_SIZE = 50;
+
 export interface WorldCallbacks {
   /** A citizen row was inserted or updated. */
   onUpsert(citizen: Citizen): void;
@@ -21,7 +25,9 @@ export interface UniverseRepository {
   save(data: UniverseData): Promise<void>;
 
   // The shared world: every citizen, kept live.
-  loadWorld(): Promise<Citizen[]>;
+  // offset: row offset for pagination (default 0). The caller keeps fetching
+  // with increasing offsets until a page shorter than WORLD_PAGE_SIZE is returned.
+  loadWorld(offset?: number): Promise<Citizen[]>;
   subscribeWorld(callbacks: WorldCallbacks): () => void;
 }
 

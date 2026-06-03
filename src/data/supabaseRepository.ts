@@ -4,6 +4,9 @@ import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
 import { SUPABASE_CONFIGURED, supabase } from "./supabaseClient";
 
+// Must match WORLD_PAGE_SIZE in repository.ts.
+const PAGE_SIZE = 50;
+
 const PRIVATE_TABLE = "universes";
 const PUBLIC_TABLE  = "universe_public";
 const SAVE_DEBOUNCE_MS = 700;
@@ -108,18 +111,24 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
-  // Every citizen in the shared universe, read from the public table.
-  async loadWorld(): Promise<Citizen[]> {
-    if (!supabase) return localRepository.loadWorld();
+  // One page of the shared world, ordered by most-recently-active first.
+  // Caller increments offset by PAGE_SIZE until a short page is returned.
+  async loadWorld(offset = 0): Promise<Citizen[]> {
+    if (!supabase) return localRepository.loadWorld(offset);
     try {
-      const { data, error } = await supabase.from(PUBLIC_TABLE).select("id, data");
+      const { data, error } = await supabase
+        .from(PUBLIC_TABLE)
+        .select("id, data")
+        .order("updated_at", { ascending: false })
+        .order("id",         { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
       if (error) throw error;
       return (data ?? [])
         .map((row) => toCitizen(row.id as string, row.data as PublicRow))
         .filter((c): c is Citizen => c !== null);
     } catch (err) {
       console.warn("Universe: could not load the shared world", err);
-      return localRepository.loadWorld();
+      return offset === 0 ? localRepository.loadWorld() : [];
     }
   }
 

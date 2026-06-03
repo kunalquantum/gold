@@ -47,8 +47,8 @@ export class LocalRepository implements UniverseRepository {
     }
   }
 
-  // With no cloud, the "world" is just this person.
-  async loadWorld(): Promise<Citizen[]> {
+  // With no cloud, the "world" is just this person (offset ignored).
+  async loadWorld(_offset?: number): Promise<Citizen[]> {
     const data = await this.load();
     if (!data.user?.name) return [];
     return [

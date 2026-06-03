@@ -30,7 +30,7 @@ import type {
   WisdomEntry,
 } from "../types";
 import { SELF_ID, emptyUniverse } from "../types";
-import { repository } from "../data/repository";
+import { repository, WORLD_PAGE_SIZE } from "../data/repository";
 import type { SyncStatus } from "../data/repository";
 import { ownerId } from "../data/identity";
 import {
@@ -275,8 +275,37 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   },
 
   loadWorld: async () => {
-    const all = await repository.loadWorld();
-    set({ others: all.filter((c) => c.ownerId !== SELF) });
+    // First page loads immediately — the app becomes interactive without waiting
+    // for the full world. Remaining pages are fetched in the background and
+    // merged into the store as they arrive.
+    const first = await repository.loadWorld(0);
+    const toOthers = (cs: typeof first) => cs.filter((c) => c.ownerId !== SELF);
+
+    set((s) => {
+      // Merge over existing so a reconnect refresh doesn't flicker.
+      const map = new Map(s.others.map((c) => [c.ownerId, c]));
+      for (const c of toOthers(first)) map.set(c.ownerId, c);
+      return { others: Array.from(map.values()) };
+    });
+
+    if (first.length >= WORLD_PAGE_SIZE) {
+      void (async () => {
+        let offset = WORLD_PAGE_SIZE;
+        for (;;) {
+          const page = await repository.loadWorld(offset);
+          const citizens = toOthers(page);
+          if (citizens.length > 0) {
+            set((s) => {
+              const map = new Map(s.others.map((c) => [c.ownerId, c]));
+              for (const c of citizens) map.set(c.ownerId, c);
+              return { others: Array.from(map.values()) };
+            });
+          }
+          if (page.length < WORLD_PAGE_SIZE) break;
+          offset += WORLD_PAGE_SIZE;
+        }
+      })();
+    }
   },
 
   setUser: (user) => {
