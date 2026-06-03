@@ -13,7 +13,10 @@ interface Props {
   sharedFromName?: string;
 }
 
-function makeCloudTexture(): THREE.Texture {
+// Shared across all nebula instances — one GPU texture upload total.
+let _cloudTexture: THREE.Texture | null = null;
+function getCloudTexture(): THREE.Texture {
+  if (_cloudTexture) return _cloudTexture;
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
@@ -24,9 +27,9 @@ function makeCloudTexture(): THREE.Texture {
   g.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, size, size);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+  _cloudTexture = new THREE.CanvasTexture(canvas);
+  _cloudTexture.colorSpace = THREE.SRGBColorSpace;
+  return _cloudTexture;
 }
 
 export function NebulaMesh({ nebula, ownerPos, artifactCount, onEnter, sharedFromName }: Props) {
@@ -53,7 +56,7 @@ export function NebulaMesh({ nebula, ownerPos, artifactCount, onEnter, sharedFro
     return { positions, count };
   }, [nebula.id, nebula.echoCount]);
 
-  const dot = useMemo(makeCloudTexture, []);
+  const dot = getCloudTexture();
 
   const brightness = hovered ? 1.4 : 1.0;
 

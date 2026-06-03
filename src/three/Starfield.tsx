@@ -5,7 +5,7 @@ import * as THREE from "three";
 // A deep field of stars with real variety: a range of colour temperatures
 // (cool blue-white through warm amber), differing brightness, and a slow
 // independent twinkle. Round and soft, never square sprites.
-export function Starfield({ count = 4200 }: { count?: number }) {
+export function Starfield({ count = 2500 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
 
   const { positions, colors, sizes, phases } = useMemo(() => {

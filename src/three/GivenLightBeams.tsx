@@ -10,21 +10,21 @@ interface Props {
 }
 
 // A single faint beam from this user's star to a recipient's star.
+// Material and Line object are stable; only geometry rebuilds when endpoints change.
 function Beam({ from, to, offset }: { from: THREE.Vector3; to: THREE.Vector3; offset: number }) {
-  const matRef = useRef<THREE.LineBasicMaterial>(null);
+  const mat = useRef(new THREE.LineBasicMaterial({ color: "#ffd27a", transparent: true, opacity: 0.08 }));
+  const geometry = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints([from, to]),
+    [from, to],
+  );
+  const lineObj = useMemo(() => new THREE.Line(geometry, mat.current), [geometry]);
 
   useFrame((state) => {
-    if (!matRef.current) return;
     const t = state.clock.elapsedTime + offset;
-    matRef.current.opacity = 0.06 + Math.sin(t * 0.6) * 0.04;
+    mat.current.opacity = 0.06 + Math.sin(t * 0.6) * 0.04;
   });
 
-  const points = useMemo(() => [from, to], [from, to]);
-  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
-
-  return (
-    <primitive object={new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: "#ffd27a", transparent: true, opacity: 0.08 }))} />
-  );
+  return <primitive object={lineObj} />;
 }
 
 export function GivenLightBeams({ selfId, givenLights }: Props) {

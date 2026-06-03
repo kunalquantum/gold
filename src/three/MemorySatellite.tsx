@@ -32,11 +32,11 @@ export function MemorySatellite({ index, total, baseRadius }: Props) {
   return (
     <group ref={ref}>
       <mesh>
-        <sphereGeometry args={[0.12, 16, 16]} />
+        <sphereGeometry args={[0.12, 8, 8]} />
         <meshBasicMaterial color="#fff4d6" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[0.24, 16, 16]} />
+        <sphereGeometry args={[0.24, 8, 8]} />
         <meshBasicMaterial color="#ffd27a" transparent opacity={0.3} />
       </mesh>
     </group>

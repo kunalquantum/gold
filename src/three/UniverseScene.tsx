@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { AdaptiveDpr, OrbitControls } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
@@ -21,22 +21,24 @@ function CameraRig() {
   const target = useMemo(() => new THREE.Vector3(), []);
   const desired = useMemo(() => new THREE.Vector3(), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const up08 = useMemo(() => new THREE.Vector3(0, 0.8, 0), []);
+  const up25 = useMemo(() => new THREE.Vector3(0, 2.5, 0), []);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     const store = useUniverseStore.getState();
-    const world = store.world();
     const { selectedCitizenId, focusedPersonId, openedLightId } = store;
 
     const ownerPos = (ownerId: string) => galaxyPosition(ownerId);
 
     let close = false;
 
+    // Only build the world array when we actually need to find a specific object.
     const openedLight = openedLightId
-      ? findLight(world, openedLightId)
+      ? findLight(store.world(), openedLightId)
       : null;
-    const focusedPerson = focusedPersonId
-      ? findPerson(world, focusedPersonId)
+    const focusedPerson = !openedLight && focusedPersonId
+      ? findPerson(store.world(), focusedPersonId)
       : null;
 
     if (openedLight) {
@@ -45,14 +47,14 @@ function CameraRig() {
       const [lx, ly, lz] = lightPosition(o, t);
       target.set(bx + lx, by + ly, bz + lz);
       tmp.set(lx, ly, lz).normalize();
-      desired.copy(target).addScaledVector(tmp, 3.4).add(new THREE.Vector3(0, 0.8, 0));
+      desired.copy(target).addScaledVector(tmp, 3.4).add(up08);
       close = true;
     } else if (focusedPerson) {
       const [bx, by, bz] = ownerPos(focusedPerson.ownerId);
       const [px, py, pz] = orbitPosition(focusedPerson.person.orbit, t);
       target.set(bx + px, by + py, bz + pz);
       tmp.set(px, py, pz).normalize();
-      desired.copy(target).addScaledVector(tmp, 6).add(new THREE.Vector3(0, 2.5, 0));
+      desired.copy(target).addScaledVector(tmp, 6).add(up25);
       close = true;
     } else {
       const [bx, by, bz] = ownerPos(selectedCitizenId);
@@ -222,6 +224,7 @@ export function UniverseScene() {
 
       <OrbitControls
         makeDefault
+        regress
         enablePan
         enableDamping
         dampingFactor={0.05}
@@ -232,9 +235,10 @@ export function UniverseScene() {
         maxDistance={520}
       />
       <CameraRig />
+      <AdaptiveDpr pixelated />
 
       <EffectComposer>
-        <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.2} luminanceSmoothing={0.9} radius={0.7} />
+        <Bloom mipmapBlur={false} intensity={0.9} luminanceThreshold={0.25} luminanceSmoothing={0.9} radius={0.5} />
         <Vignette eskil={false} offset={0.18} darkness={0.7} />
       </EffectComposer>
     </Canvas>

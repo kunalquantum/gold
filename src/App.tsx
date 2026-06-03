@@ -96,8 +96,8 @@ export default function App() {
 
   const isSurvivor = user?.role === "survivor";
   const milestonesCount = milestones.length;
-  const nebulasCount = useUniverseStore((s) => s.nebulas).length;
-  const dreamsCount = useUniverseStore((s) => s.dreams).length;
+  const nebulasCount = useUniverseStore((s) => s.nebulas.length);
+  const dreamsCount = useUniverseStore((s) => s.dreams.length);
   const inNebula = overlay.kind === "nebulaInterior";
   const hasStarsAhead = others.some((c) => c.user.isPublic && (
     c.user.role === "survivor" ||

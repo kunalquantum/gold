@@ -26,7 +26,7 @@ export function SignalPulse({ position, color, index }: Props) {
 
   return (
     <mesh ref={ref} position={position} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[1.6, 2.0, 48]} />
+      <ringGeometry args={[1.6, 2.0, 32]} />
       <meshBasicMaterial color={color} transparent opacity={0.25} depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
   );
