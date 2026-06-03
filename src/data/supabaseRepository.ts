@@ -2,7 +2,7 @@ import type { Citizen, LightForm, LightType, UniverseData } from "../types";
 import type { UniverseRepository, WorldCallbacks } from "./repository";
 import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
-import { SUPABASE_CONFIGURED, supabase } from "./supabaseClient";
+import { SUPABASE_CONFIGURED, SUPABASE_URL, supabase } from "./supabaseClient";
 
 // Must match WORLD_PAGE_SIZE in repository.ts.
 const PAGE_SIZE = 50;
@@ -111,6 +111,50 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
+  // One page of the shared world via the CDN-cacheable Edge Function.
+  // Falls back to PostgREST if the function hasn't been deployed yet.
+  async loadWorld(offset = 0): Promise<Citizen[]> {
+    if (!supabase) return localRepository.loadWorld(offset);
+
+    if (SUPABASE_URL) {
+      try {
+        const fnUrl = `${SUPABASE_URL}/functions/v1/world?offset=${offset}`;
+        const resp = await fetch(fnUrl);
+        if (resp.ok) {
+          const { rows } = await resp.json() as { rows: Array<{ id: string; data: PublicRow }> };
+          return (rows ?? [])
+            .map((row) => toCitizen(row.id, row.data))
+            .filter((c): c is Citizen => c !== null);
+        }
+        // Function not deployed (404) or error (5xx) — fall through to PostgREST.
+      } catch {
+        // Network error — fall through.
+      }
+    }
+
+    return this.loadWorldPostgREST(offset);
+  }
+
+  // Direct PostgREST fallback — used until the Edge Function is deployed.
+  private async loadWorldPostgREST(offset = 0): Promise<Citizen[]> {
+    if (!supabase) return offset === 0 ? localRepository.loadWorld() : [];
+    try {
+      const { data, error } = await supabase
+        .from(PUBLIC_TABLE)
+        .select("id, data")
+        .order("updated_at", { ascending: false })
+        .order("id",         { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (error) throw error;
+      return (data ?? [])
+        .map((row) => toCitizen(row.id as string, row.data as PublicRow))
+        .filter((c): c is Citizen => c !== null);
+    } catch (err) {
+      console.warn("Universe: could not load the shared world", err);
+      return offset === 0 ? localRepository.loadWorld() : [];
+    }
+  }
+
   // Fetch specific citizens by ID — used for orbit-priority loading.
   async loadCitizensByIds(ids: string[]): Promise<Citizen[]> {
     if (!supabase || ids.length === 0) return [];
@@ -126,27 +170,6 @@ class SupabaseRepository implements UniverseRepository {
     } catch (err) {
       console.warn("Universe: could not load orbited citizens", err);
       return [];
-    }
-  }
-
-  // One page of the shared world, ordered by most-recently-active first.
-  // Caller increments offset by PAGE_SIZE until a short page is returned.
-  async loadWorld(offset = 0): Promise<Citizen[]> {
-    if (!supabase) return localRepository.loadWorld(offset);
-    try {
-      const { data, error } = await supabase
-        .from(PUBLIC_TABLE)
-        .select("id, data")
-        .order("updated_at", { ascending: false })
-        .order("id",         { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1);
-      if (error) throw error;
-      return (data ?? [])
-        .map((row) => toCitizen(row.id as string, row.data as PublicRow))
-        .filter((c): c is Citizen => c !== null);
-    } catch (err) {
-      console.warn("Universe: could not load the shared world", err);
-      return offset === 0 ? localRepository.loadWorld() : [];
     }
   }
 
