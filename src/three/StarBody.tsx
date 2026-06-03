@@ -59,14 +59,14 @@ export function StarBody({ citizen, isSelf, selected, onSelect }: Props) {
       {/* Survivor: slow golden outer ring that breathes */}
       {isSurvivor && (
         <mesh ref={survivorRing} rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[size * 2.6, size * 2.85, 80]} />
+          <ringGeometry args={[size * 2.6, size * 2.85, 48]} />
           <meshBasicMaterial color="#ffd27a" transparent opacity={0.28} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
       )}
 
       {/* Selection / hover ring */}
       <mesh ref={ring} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[size * 1.9, size * 2.1, 64]} />
+        <ringGeometry args={[size * 1.9, size * 2.1, 40]} />
         <meshBasicMaterial color={color} transparent opacity={0} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
 

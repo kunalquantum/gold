@@ -22,7 +22,7 @@ export function Nebula() {
 
   return (
     <mesh scale={680}>
-      <sphereGeometry args={[1, 48, 48]} />
+      <sphereGeometry args={[1, 24, 24]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={NEBULA_VERT}

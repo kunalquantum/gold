@@ -8,7 +8,6 @@ import { SystemLights } from "./LightField";
 import { NebulaMesh } from "./NebulaMesh";
 import { DreamStarMesh } from "./DreamStarMesh";
 import { SignalPulse } from "./SignalPulse";
-import { useShallow } from "zustand/react/shallow";
 
 const SIGNAL_RECENCY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -17,6 +16,7 @@ interface Props {
   isSelf: boolean;
   selected: boolean;
   anySelection: boolean;
+  nameById: Map<string, string>;
   onSelectStar: (citizen: Citizen) => void;
   onSelectPerson: (person: Person, citizen: Citizen) => void;
   onOpenLight: (light: Light, citizen: Citizen) => void;
@@ -30,6 +30,7 @@ export function System({
   isSelf,
   selected,
   anySelection,
+  nameById,
   onSelectStar,
   onSelectPerson,
   onOpenLight,
@@ -37,7 +38,6 @@ export function System({
   onOpenDream,
 }: Props) {
   const focusedPersonId = useUniverseStore((s) => s.focusedPersonId);
-  const others = useUniverseStore(useShallow((s) => s.others));
   const pos = useMemo(() => galaxyPosition(citizen.ownerId), [citizen.ownerId]);
   const dimmed = anySelection && !selected;
   const showLights = selected || isSelf;
@@ -73,9 +73,7 @@ export function System({
 
       {/* Memory nebulas float near this citizen's star */}
       {citizen.nebulas.map((nebula) => {
-        const sharedFromName = nebula.sharedFromId
-          ? others.find((c) => c.ownerId === nebula.sharedFromId)?.user.name
-          : undefined;
+        const sharedFromName = nebula.sharedFromId ? nameById.get(nebula.sharedFromId) : undefined;
         return (
           <NebulaMesh
             key={nebula.id}
@@ -103,9 +101,7 @@ export function System({
 
       {/* Dream stars float in deep space beyond the known system */}
       {citizen.dreams.map((dream) => {
-        const sharedFromName = dream.sharedFromId
-          ? others.find((c) => c.ownerId === dream.sharedFromId)?.user.name
-          : undefined;
+        const sharedFromName = dream.sharedFromId ? nameById.get(dream.sharedFromId) : undefined;
         return (
           <DreamStarMesh
             key={dream.id}

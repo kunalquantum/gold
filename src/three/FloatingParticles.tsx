@@ -25,7 +25,7 @@ function makeSoftDot(): THREE.Texture {
   return tex;
 }
 
-export function FloatingParticles({ count = 320 }: Props) {
+export function FloatingParticles({ count = 160 }: Props) {
   const points = useRef<THREE.Points>(null);
   const dot = useMemo(makeSoftDot, []);
 

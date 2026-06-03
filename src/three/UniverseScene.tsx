@@ -99,6 +99,9 @@ export function UniverseScene() {
   const artifacts = useUniverseStore((s) => s.artifacts);
   const dreams = useUniverseStore((s) => s.dreams);
   const fragments = useUniverseStore((s) => s.fragments);
+  const wisdom = useUniverseStore((s) => s.wisdom);
+  const signals = useUniverseStore((s) => s.signals);
+  const constellations = useUniverseStore((s) => s.constellations);
   const selectedCitizenId = useUniverseStore((s) => s.selectedCitizenId);
 
   const selectCitizen = useUniverseStore((s) => s.selectCitizen);
@@ -117,7 +120,6 @@ export function UniverseScene() {
   // Build the rendered world: your live self plus every other citizen, with shared
   // nebulas and shared dreams injected into participant citizens.
   const world = useMemo<Citizen[]>(() => {
-    const { wisdom, signals, constellations } = useUniverseStore.getState();
     const self: Citizen | null = user?.name
       ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations }
       : null;
@@ -163,9 +165,15 @@ export function UniverseScene() {
         fragments: [...citizen.fragments, ...extraFragments],
       };
     });
-  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, others]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations, others]);
 
   const anySelection = world.length > 1;
+  const nameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of world) if (c.user.name) m.set(c.ownerId, c.user.name);
+    return m;
+  }, [world]);
 
   const handleSelectStar = (citizen: Citizen) => {
     selectCitizen(citizen.ownerId);
@@ -184,8 +192,8 @@ export function UniverseScene() {
   return (
     <Canvas
       camera={{ position: [0, 16, 44], fov: 55, near: 0.1, far: 4000 }}
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: false }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: false, alpha: false }}
       onPointerMissed={() => focusPerson(null)}
     >
       <color attach="background" args={["#03040c"]} />
@@ -203,6 +211,7 @@ export function UniverseScene() {
           isSelf={citizen.ownerId === selfId}
           selected={citizen.ownerId === selectedCitizenId}
           anySelection={anySelection}
+          nameById={nameById}
           onSelectStar={handleSelectStar}
           onSelectPerson={handleSelectPerson}
           onOpenLight={handleOpenLight}

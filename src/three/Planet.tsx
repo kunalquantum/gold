@@ -57,7 +57,7 @@ export function Planet({
   return (
     <group>
       <mesh ref={body}>
-        <sphereGeometry args={[size, 96, 96]} />
+        <sphereGeometry args={[size, 32, 32]} />
         <shaderMaterial
           uniforms={uniforms}
           vertexShader={SURFACE_VERT}
@@ -67,7 +67,7 @@ export function Planet({
 
       {/* Atmosphere — glows on the lit limb */}
       <mesh scale={1.16}>
-        <sphereGeometry args={[size, 48, 48]} />
+        <sphereGeometry args={[size, 16, 16]} />
         <shaderMaterial
           uniforms={atmoUniforms}
           vertexShader={ATMO_VERT}

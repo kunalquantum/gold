@@ -24,6 +24,7 @@ const PLANET_TYPES: PlanetType[] = ["gas", "rocky", "ice"];
 export function PersonBody({ person, memories, focused, dimmed, starPos, onSelect }: Props) {
   const group = useRef<THREE.Group>(null);
   const bodyGroup = useRef<THREE.Group>(null);
+  const scaleVec = useRef(new THREE.Vector3(1, 1, 1));
   const [hovered, setHovered] = useState(false);
   const { orbit } = person;
 
@@ -46,8 +47,9 @@ export function PersonBody({ person, memories, focused, dimmed, starPos, onSelec
     const [x, y, z] = orbitPosition(orbit, t);
     if (group.current) group.current.position.set(x, y, z);
     if (bodyGroup.current) {
-      const target = (hovered || focused ? 1.18 : dimmed ? 0.92 : 1) * 1;
-      bodyGroup.current.scale.lerp(new THREE.Vector3(target, target, target), 0.1);
+      const target = hovered || focused ? 1.18 : dimmed ? 0.92 : 1;
+      scaleVec.current.set(target, target, target);
+      bodyGroup.current.scale.lerp(scaleVec.current, 0.1);
     }
   });
 
@@ -129,7 +131,7 @@ function PhotoSphere({ url, size, tint }: { url: string; size: number; tint: str
   return (
     <group>
       <mesh ref={mesh}>
-        <sphereGeometry args={[size, 64, 64]} />
+        <sphereGeometry args={[size, 32, 32]} />
         <meshStandardMaterial
           map={map}
           emissive={tint}
