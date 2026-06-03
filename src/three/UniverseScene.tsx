@@ -23,9 +23,11 @@ function CameraRig() {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const up08 = useMemo(() => new THREE.Vector3(0, 0.8, 0), []);
   const up25 = useMemo(() => new THREE.Vector3(0, 2.5, 0), []);
-  // Tracks whether the camera has finished its fly-to and settled at the
-  // current idle position. Once settled, the rig stops fighting manual zoom/pan.
-  const settled = useRef(false);
+  // After a selection/recentre change, the rig flies for SETTLE_SECS then
+  // releases control entirely — free roam resumes after the timer expires.
+  // Close-up modes (focused person/light) always track because those targets move.
+  const SETTLE_SECS = 1.8;
+  const releaseAt = useRef(0);
   const prevKey = useRef("");
 
   useFrame((state) => {
@@ -35,11 +37,11 @@ function CameraRig() {
 
     const ownerPos = (ownerId: string) => galaxyPosition(ownerId);
 
-    // Any selection change — or explicit recentre() — resets settled so we fly.
+    // Any change in selection or explicit recentre() restarts the fly-to timer.
     const key = `${selectedCitizenId}|${focusedPersonId ?? ""}|${openedLightId ?? ""}|${recentreSeq}`;
     if (key !== prevKey.current) {
       prevKey.current = key;
-      settled.current = false;
+      releaseAt.current = t + SETTLE_SECS;
     }
 
     let close = false;
@@ -68,9 +70,8 @@ function CameraRig() {
       desired.copy(target).addScaledVector(tmp, 6).add(up25);
       close = true;
     } else {
-      // Idle: only lerp until we've reached the target; after that let the
-      // user zoom / pan freely without the rig fighting them.
-      if (settled.current) return;
+      // Idle: stop lerping once the timer expires — full free roam from here.
+      if (t >= releaseAt.current) return;
       const [bx, by, bz] = ownerPos(selectedCitizenId);
       target.set(bx, by, bz);
       desired.set(bx, by + 12, bz + 34);
@@ -79,12 +80,8 @@ function CameraRig() {
     camera.position.lerp(desired, close ? 0.045 : 0.06);
     if (controls) {
       controls.target.lerp(target, close ? 0.07 : 0.08);
-      controls.update();
-    }
-
-    // Settle once camera is within 0.5 units of the idle target.
-    if (!close && camera.position.distanceToSquared(desired) < 0.25) {
-      settled.current = true;
+      // drei's OrbitControls runs its own update() at frame priority −1 (before
+      // this hook). Calling update() again here would double-apply damping.
     }
   });
 
