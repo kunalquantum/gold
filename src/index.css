@@ -3385,3 +3385,293 @@ canvas {
   background: rgba(200, 162, 255, 0.2);
   border-radius: 3px;
 }
+
+/* ---------- Phase 8: Shared Universe ---------- */
+
+/* ── Stargazing Panel ── */
+.stargazing-panel {
+  max-width: 680px;
+}
+.stargazing__filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.stargazing__filter {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s, background 0.25s;
+}
+.stargazing__filter:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--ink-soft);
+}
+.stargazing__filter--active {
+  border-color: rgba(200, 162, 255, 0.5);
+  color: var(--purple);
+  background: rgba(200, 162, 255, 0.07);
+}
+.stargazing__stream {
+  margin-bottom: 8px;
+}
+
+/* Signal cards */
+.signal-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+  transition: border-color 0.25s;
+}
+.signal-card:last-child {
+  margin-bottom: 0;
+}
+.signal-card:hover {
+  border-color: rgba(255, 255, 255, 0.09);
+}
+.signal-card--mine {
+  background: rgba(255, 210, 122, 0.025);
+  border-color: rgba(255, 210, 122, 0.12);
+}
+.signal-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.signal-card__type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  color: var(--ink-faint);
+}
+.signal-card__time {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.2px;
+}
+.signal-card__content {
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.signal-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.signal-card__author {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  font-style: italic;
+}
+.signal-card__reactions {
+  display: flex;
+  gap: 6px;
+}
+.signal-reaction {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--ink-faint);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.signal-reaction:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ink-soft);
+}
+.signal-reaction--active {
+  background: rgba(255, 210, 122, 0.1);
+  border-color: rgba(255, 210, 122, 0.4);
+  color: var(--gold-soft);
+}
+
+/* My signals section */
+.stargazing__mine {
+  margin-top: 4px;
+}
+.stargazing__mine-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+}
+
+/* Signal sent confirmation */
+.stargazing__sent {
+  text-align: center;
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--gold-soft);
+  padding: 16px 0;
+  font-style: italic;
+}
+
+/* Signal composer */
+.signal-composer {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+.signal-composer__types {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.signal-composer__type {
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.signal-composer__type:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--ink-soft);
+}
+.signal-composer__type--active {
+  border-color: rgba(255, 210, 122, 0.5);
+  color: var(--gold-soft);
+  background: rgba(255, 210, 122, 0.06);
+}
+.signal-composer__chars {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* Link to constellations */
+.stargazing__constellation-link {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1px dashed rgba(200, 162, 255, 0.18);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s, background 0.3s;
+  text-align: center;
+}
+.stargazing__constellation-link:hover {
+  border-color: rgba(200, 162, 255, 0.35);
+  color: var(--purple);
+  background: rgba(200, 162, 255, 0.04);
+}
+
+/* ── Constellations Panel ── */
+.constellations-panel {
+  max-width: 680px;
+}
+.constellation-panel__desc {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-bottom: 22px;
+}
+.constellation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+@media (max-width: 480px) {
+  .constellation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.constellation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.25s, background 0.25s, transform 0.2s;
+}
+.constellation-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.constellation-card--joined {
+  background: rgba(200, 162, 255, 0.04);
+  border-color: rgba(200, 162, 255, 0.22);
+}
+.constellation-card__glyph {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.constellation-card__label {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.constellation-card__desc {
+  font-size: 11px;
+  color: var(--ink-faint);
+  line-height: 1.55;
+  letter-spacing: 0.2px;
+}
+.constellation-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.constellation-card__count {
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+}
+.constellation-join-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s, background 0.25s;
+}
+.constellation-join-btn:hover {
+  border-color: rgba(200, 162, 255, 0.4);
+  color: var(--purple);
+}
+.constellation-join-btn--joined {
+  border-color: rgba(200, 162, 255, 0.3);
+  color: var(--purple);
+  background: rgba(200, 162, 255, 0.06);
+}
+.constellation-join-btn--joined:hover {
+  border-color: rgba(255, 100, 100, 0.3);
+  color: var(--rose);
+  background: transparent;
+}

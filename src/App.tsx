@@ -18,6 +18,8 @@ import { DreamPanel } from "./ui/DreamPanel";
 import { StarsAheadPanel } from "./ui/StarsAheadPanel";
 import { LightIGivePanel } from "./ui/LightIGivePanel";
 import { LibraryOfLight } from "./ui/LibraryOfLight";
+import { StargazingPanel } from "./ui/StargazingPanel";
+import { ConstellationsPanel } from "./ui/ConstellationsPanel";
 
 // Positions orbs in a quarter-circle arc: straight up → pure left (FAB is bottom-right).
 // Radius scales with item count to maintain comfortable spacing.
@@ -101,6 +103,8 @@ export default function App() {
       items.push({ key: "milestone", icon: "★", label: milestonesCount > 0 ? `${milestonesCount} milestone${milestonesCount === 1 ? "" : "s"}` : "Mark a moment", action: () => openOverlay({ kind: "milestone" }) });
     items.push({ key: "nebula", icon: "☁", label: nebulasCount > 0 ? `${nebulasCount} nebula${nebulasCount === 1 ? "" : "s"}` : "New memory", action: () => openOverlay({ kind: "createNebula" }) });
     items.push({ key: "dream", icon: "✦", label: dreamsCount > 0 ? `${dreamsCount} dream${dreamsCount === 1 ? "" : "s"}` : "New dream", action: () => openOverlay({ kind: "createDream" }) });
+    items.push({ key: "stargazing", icon: "✨", label: "Stargazing", action: () => openOverlay({ kind: "stargazing" }) });
+    items.push({ key: "constellations", icon: "✦", label: "Constellations", action: () => openOverlay({ kind: "constellations" }) });
     items.push({ key: "add", icon: "+", label: "Add someone", accent: "gold", action: () => openOverlay({ kind: "addPerson" }) });
     return items;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,6 +234,8 @@ export default function App() {
         {overlay.kind === "starsAhead" && <StarsAheadPanel key="starsAhead" />}
         {overlay.kind === "lightIGive" && <LightIGivePanel key="lightIGive" />}
         {overlay.kind === "libraryOfLight" && <LibraryOfLight key="libraryOfLight" />}
+        {overlay.kind === "stargazing" && <StargazingPanel key="stargazing" />}
+        {overlay.kind === "constellations" && <ConstellationsPanel key="constellations" />}
       </AnimatePresence>
 
       <AnimatePresence>

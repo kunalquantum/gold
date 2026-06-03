@@ -95,6 +95,48 @@ export interface FutureLetter {
   openedAt?: number;
 }
 
+// ─── Phase 8: Shared Universe ────────────────────────────────────────────────
+
+export type SignalType = "dream" | "memory" | "milestone" | "reflection";
+export type SignalVisibility = "public" | "constellation" | "orbiters";
+export type CosmicReactionType = "light" | "relate" | "inspired" | "thanks";
+
+export type ConstellationId =
+  | "artists"
+  | "readers"
+  | "musicians"
+  | "travelers"
+  | "developers"
+  | "gardeners"
+  | "photographers"
+  | "walkers";
+
+// A short moment shared with the universe. Public by default. Not a post.
+export interface Signal {
+  id: string;
+  authorId: string;
+  type: SignalType;
+  content: string;
+  visibility: SignalVisibility;
+  constellationId?: ConstellationId;
+  createdAt: number;
+}
+
+// Private — who this user is orbiting (not stored in Citizen).
+export interface Orbit {
+  id: string;
+  targetOwnerId: string;
+  createdAt: number;
+}
+
+// Private — reactions this user has sent (no public counts ever).
+export interface CosmicReaction {
+  id: string;
+  signalId: string;
+  type: CosmicReactionType;
+  createdAt: number;
+}
+
 // ─── Phase 7: Light I Give ────────────────────────────────────────────────────
 // The moment a person discovers they can contribute — giving light to those
 // still finding their way. Not because they are experts. Because they are human.
@@ -246,6 +288,8 @@ export interface Citizen {
   dreams: DreamStar[];
   fragments: DreamFragment[];
   wisdom: WisdomEntry[];
+  signals: Signal[];
+  constellations: ConstellationId[];
 }
 
 export interface LegacyMessage {
@@ -270,8 +314,12 @@ export interface UniverseData {
   fragments: DreamFragment[];
   futureLetters: FutureLetter[];
   receivedEchoIds: string[];
-  givenLights: GivenLight[];    // private — lights I've sent to others
-  wisdom: WisdomEntry[];         // public — my Library of Light contributions
+  givenLights: GivenLight[];       // private — lights I've sent to others
+  wisdom: WisdomEntry[];            // public — my Library of Light contributions
+  signals: Signal[];                // public — cosmic signals I've broadcast
+  orbits: Orbit[];                  // private — who I'm orbiting
+  reactions: CosmicReaction[];      // private — reactions I've sent
+  constellations: ConstellationId[]; // public — community memberships
   messages?: LegacyMessage[];
 }
 
@@ -289,4 +337,8 @@ export const emptyUniverse = (): UniverseData => ({
   receivedEchoIds: [],
   givenLights: [],
   wisdom: [],
+  signals: [],
+  orbits: [],
+  reactions: [],
+  constellations: [],
 });

@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type {
   Citizen,
+  ConstellationId,
+  CosmicReaction,
+  CosmicReactionType,
   DreamCategory,
   DreamFragment,
   DreamStar,
@@ -15,7 +18,11 @@ import type {
   MemoryArtifact,
   MemoryNebula,
   Milestone,
+  Orbit,
   Person,
+  Signal,
+  SignalType,
+  SignalVisibility,
   UnlockTrigger,
   UniverseData,
   UniverseUser,
@@ -47,7 +54,9 @@ export type Overlay =
   | { kind: "dreamDetail"; dreamId: string }
   | { kind: "starsAhead" }
   | { kind: "lightIGive" }
-  | { kind: "libraryOfLight" };
+  | { kind: "libraryOfLight" }
+  | { kind: "stargazing" }
+  | { kind: "constellations" };
 
 export interface NewLight {
   senderId: string;
@@ -74,6 +83,10 @@ interface UniverseState extends UniverseData {
   receivedEchoIds: string[];
   givenLights: GivenLight[];
   wisdom: WisdomEntry[];
+  signals: Signal[];
+  orbits: Orbit[];
+  reactions: CosmicReaction[];
+  constellations: ConstellationId[];
 
   // Shared world
   selfId: string;
@@ -119,6 +132,13 @@ interface UniverseState extends UniverseData {
   addWisdom: (input: Omit<WisdomEntry, "id" | "createdAt">) => WisdomEntry;
   setOpenToLight: (open: boolean) => void;
 
+  addSignal: (input: { type: SignalType; content: string; visibility: SignalVisibility; constellationId?: ConstellationId }) => Signal;
+  addOrbit: (targetOwnerId: string) => void;
+  removeOrbit: (targetOwnerId: string) => void;
+  addCosmicReaction: (signalId: string, type: CosmicReactionType) => void;
+  joinConstellation: (id: ConstellationId) => void;
+  leaveConstellation: (id: ConstellationId) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -130,8 +150,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom } = get();
-  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom });
+  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom, signals, orbits, reactions, constellations } = get();
+  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds, givenLights, wisdom, signals, orbits, reactions, constellations });
 }
 
 function buildLight(input: NewLight): Light {
@@ -182,6 +202,10 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   receivedEchoIds: [],
   givenLights: [],
   wisdom: [],
+  signals: [],
+  orbits: [],
+  reactions: [],
+  constellations: [],
 
   selfId: SELF,
   others: [],
@@ -203,6 +227,10 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       receivedEchoIds: data.receivedEchoIds ?? [],
       givenLights: data.givenLights ?? [],
       wisdom: data.wisdom ?? [],
+      signals: data.signals ?? [],
+      orbits: data.orbits ?? [],
+      reactions: data.reactions ?? [],
+      constellations: data.constellations ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -466,20 +494,62 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     persist(get);
   },
 
+  addSignal: (input) => {
+    const signal: Signal = { ...input, id: uid(), authorId: SELF, createdAt: Date.now() };
+    set((s) => ({ signals: [...s.signals, signal] }));
+    persist(get);
+    return signal;
+  },
+
+  addOrbit: (targetOwnerId) => {
+    if (get().orbits.some((o) => o.targetOwnerId === targetOwnerId)) return;
+    const orbit: Orbit = { id: uid(), targetOwnerId, createdAt: Date.now() };
+    set((s) => ({ orbits: [...s.orbits, orbit] }));
+    persist(get);
+  },
+
+  removeOrbit: (targetOwnerId) => {
+    set((s) => ({ orbits: s.orbits.filter((o) => o.targetOwnerId !== targetOwnerId) }));
+    persist(get);
+  },
+
+  addCosmicReaction: (signalId, type) => {
+    if (get().reactions.some((r) => r.signalId === signalId && r.type === type)) return;
+    const reaction: CosmicReaction = { id: uid(), signalId, type, createdAt: Date.now() };
+    set((s) => ({ reactions: [...s.reactions, reaction] }));
+    persist(get);
+  },
+
+  joinConstellation: (id) => {
+    if (get().constellations.includes(id)) return;
+    set((s) => ({ constellations: [...s.constellations, id] }));
+    persist(get);
+  },
+
+  leaveConstellation: (id) => {
+    set((s) => ({ constellations: s.constellations.filter((c) => c !== id) }));
+    persist(get);
+  },
+
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
 
   selfCitizen: () => {
-    const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom } = get();
+    const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom };
+    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations };
   },
 
   world: () => {
+    const { signals, constellations } = get();
     const self = get().selfCitizen();
-    const others = get().others;
-    return self ? [self, ...others] : others;
+    if (self) {
+      // Ensure live signals/constellations are always current on the self citizen
+      const updatedSelf = { ...self, signals, constellations };
+      return [updatedSelf, ...get().others];
+    }
+    return get().others;
   },
 }));

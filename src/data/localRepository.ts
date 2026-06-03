@@ -28,6 +28,10 @@ export class LocalRepository implements UniverseRepository {
         receivedEchoIds: parsed.receivedEchoIds ?? [],
         givenLights: parsed.givenLights ?? [],
         wisdom: parsed.wisdom ?? [],
+        signals: parsed.signals ?? [],
+        orbits: parsed.orbits ?? [],
+        reactions: parsed.reactions ?? [],
+        constellations: parsed.constellations ?? [],
         messages: parsed.messages ?? [],
       };
     } catch {
@@ -60,6 +64,8 @@ export class LocalRepository implements UniverseRepository {
         dreams: data.dreams,
         fragments: data.fragments,
         wisdom: data.wisdom,
+        signals: data.signals,
+        constellations: data.constellations,
       },
     ];
   }

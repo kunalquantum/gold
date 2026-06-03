@@ -7,7 +7,10 @@ import { PersonBody } from "./PersonBody";
 import { SystemLights } from "./LightField";
 import { NebulaMesh } from "./NebulaMesh";
 import { DreamStarMesh } from "./DreamStarMesh";
+import { SignalPulse } from "./SignalPulse";
 import { useShallow } from "zustand/react/shallow";
+
+const SIGNAL_RECENCY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 interface Props {
   citizen: Citizen;
@@ -84,6 +87,19 @@ export function System({
           />
         );
       })}
+
+      {/* Signal pulses — expanding rings for citizens with recent signals */}
+      {citizen.signals
+        .filter((s) => s.visibility === "public" && Date.now() - s.createdAt < SIGNAL_RECENCY_MS)
+        .slice(0, 3)
+        .map((s, i) => (
+          <SignalPulse
+            key={s.id}
+            position={[0, 0, 0]}
+            color={citizen.user.color}
+            index={i}
+          />
+        ))}
 
       {/* Dream stars float in deep space beyond the known system */}
       {citizen.dreams.map((dream) => {

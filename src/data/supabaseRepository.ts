@@ -116,6 +116,8 @@ function toCitizen(id: string, data: UniverseData): Citizen | null {
     dreams: data.dreams ?? [],
     fragments: data.fragments ?? [],
     wisdom: data.wisdom ?? [],
+    signals: data.signals ?? [],
+    constellations: data.constellations ?? [],
   };
 }
 

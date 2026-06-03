@@ -117,9 +117,9 @@ export function UniverseScene() {
   // Build the rendered world: your live self plus every other citizen, with shared
   // nebulas and shared dreams injected into participant citizens.
   const world = useMemo<Citizen[]>(() => {
-    const wisdom = useUniverseStore.getState().wisdom;
+    const { wisdom, signals, constellations } = useUniverseStore.getState();
     const self: Citizen | null = user?.name
-      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom }
+      ? { ownerId: selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations }
       : null;
     const raw = self ? [self, ...others] : others;
 

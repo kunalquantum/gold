@@ -1,5 +1,7 @@
 import type {
   ArtifactType,
+  ConstellationId,
+  CosmicReactionType,
   DreamCategory,
   EmotionTag,
   FutureLetterTrigger,
@@ -10,6 +12,7 @@ import type {
   MilestoneType,
   OrbitParams,
   RelationshipKind,
+  SignalType,
   UnlockTrigger,
   UserRole,
   WisdomCategory,
@@ -398,6 +401,69 @@ export const WISDOM_CATEGORY_GLYPHS: Record<WisdomCategory, string> = {
   dreams: "✨",
   recovery: "◉",
   identity: "◎",
+};
+
+// ─── Phase 8: Shared Universe ────────────────────────────────────────────────
+
+export const CONSTELLATION_LABELS: Record<ConstellationId, string> = {
+  artists: "Artists",
+  readers: "Readers",
+  musicians: "Musicians",
+  travelers: "Travelers",
+  developers: "Developers",
+  gardeners: "Gardeners",
+  photographers: "Photographers",
+  walkers: "Walkers",
+};
+
+export const CONSTELLATION_GLYPHS: Record<ConstellationId, string> = {
+  artists: "🎨",
+  readers: "📚",
+  musicians: "🎸",
+  travelers: "✈",
+  developers: "💻",
+  gardeners: "🌱",
+  photographers: "📷",
+  walkers: "🏃",
+};
+
+export const CONSTELLATION_DESCRIPTIONS: Record<ConstellationId, string> = {
+  artists: "People who create with their hands and hearts",
+  readers: "People who find whole worlds between pages",
+  musicians: "People for whom music is medicine",
+  travelers: "People who dream of new horizons",
+  developers: "People who build things that didn't exist before",
+  gardeners: "People who know how to coax life from soil",
+  photographers: "People who notice what others miss",
+  walkers: "People who find clarity in movement",
+};
+
+export const SIGNAL_TYPE_LABELS: Record<SignalType, string> = {
+  dream: "Dream",
+  memory: "Memory",
+  milestone: "Milestone",
+  reflection: "Reflection",
+};
+
+export const SIGNAL_TYPE_GLYPHS: Record<SignalType, string> = {
+  dream: "✨",
+  memory: "◈",
+  milestone: "★",
+  reflection: "◎",
+};
+
+export const COSMIC_REACTION_LABELS: Record<CosmicReactionType, string> = {
+  light: "Sending Light",
+  relate: "I Relate",
+  inspired: "Inspired Me",
+  thanks: "Thank You",
+};
+
+export const COSMIC_REACTION_GLYPHS: Record<CosmicReactionType, string> = {
+  light: "✨",
+  relate: "🌙",
+  inspired: "☀",
+  thanks: "⭐",
 };
 
 export function formatDate(value?: string | number): string {
