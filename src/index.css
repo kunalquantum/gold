@@ -2413,6 +2413,443 @@ canvas {
   margin-top: 8px;
 }
 
+/* ---------- Phase 6: Stars Ahead ---------- */
+
+/* HUD button */
+.stars-ahead-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 122, 0.35);
+  background: rgba(12, 10, 2, 0.55);
+  color: var(--gold-soft);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.4s, transform 0.3s;
+}
+.stars-ahead-btn:hover {
+  border-color: rgba(255, 210, 122, 0.65);
+  transform: translateY(-1px);
+}
+.stars-ahead-btn__glyph {
+  font-size: 14px;
+  animation: glint 4s ease-in-out infinite;
+}
+
+/* Panel */
+.stars-ahead-panel {
+  width: min(560px, 96vw);
+  max-height: 88vh;
+}
+.stars-ahead__sub {
+  font-size: 12px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+.stars-ahead__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.stars-ahead__filter {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.stars-ahead__filter:hover {
+  color: var(--ink-soft);
+  border-color: rgba(255, 210, 122, 0.3);
+}
+.stars-ahead__filter--active {
+  border-color: rgba(255, 210, 122, 0.6);
+  color: var(--gold-soft);
+  background: rgba(255, 210, 122, 0.06);
+}
+.stars-ahead__empty {
+  text-align: center;
+  padding: 48px 24px;
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+}
+
+/* Constellation map */
+.constellation-map {
+  position: relative;
+  margin-bottom: 12px;
+}
+.constellation-map__guide {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.constellation-map__label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-faint);
+}
+.constellation-map__field {
+  position: relative;
+  height: 340px;
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 122, 0.04) 0%, rgba(2, 3, 10, 0.5) 80%);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.constellation-map__path {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(255, 210, 122, 0.12), transparent);
+  pointer-events: none;
+}
+.constellation-map__hint {
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 10px;
+  text-align: center;
+}
+.constellation-map__echo-indicator {
+  color: var(--gold-soft);
+  font-size: 9px;
+}
+
+/* Individual star dots */
+.star-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px;
+}
+.star-dot__core {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--star-color, #ffd27a);
+  box-shadow: 0 0 8px var(--star-color, #ffd27a), 0 0 20px var(--star-color, #ffd27a);
+  animation: star-pulse 3s ease-in-out infinite;
+  transition: width 0.3s, height 0.3s, box-shadow 0.3s;
+}
+.star-dot:hover .star-dot__core {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 16px var(--star-color, #ffd27a), 0 0 40px var(--star-color, #ffd27a);
+}
+.star-dot__halo {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--star-color, #ffd27a) 0%, transparent 70%);
+  opacity: 0.15;
+  animation: star-pulse 3s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+.star-dot__echo-ring {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 210, 122, 0.5);
+  pointer-events: none;
+  animation: echo-ring 2.4s ease-in-out infinite;
+}
+.star-dot__label {
+  font-family: var(--display);
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transition: color 0.3s;
+  letter-spacing: 0.2px;
+}
+.star-dot:hover .star-dot__label {
+  color: var(--ink-soft);
+}
+.star-dot--received .star-dot__core {
+  box-shadow: 0 0 14px var(--star-color, #ffd27a), 0 0 36px var(--star-color, #ffd27a);
+  opacity: 1;
+}
+@keyframes star-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes echo-ring {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* Profile view inside panel */
+.star-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.star-profile__back {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color 0.2s;
+}
+.star-profile__back:hover { color: var(--ink-soft); }
+.star-profile__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.star-profile__star {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(255, 210, 122, 0.6));
+}
+.star-profile__name {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+.star-profile__badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.star-profile__journey {
+  background: rgba(255, 210, 122, 0.04);
+  border: 1px solid rgba(255, 210, 122, 0.16);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.star-profile__journey-row {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.star-profile__journey-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  width: 28px;
+}
+.star-profile__journey-text {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  font-style: italic;
+}
+.star-profile__journey-arrow {
+  text-align: center;
+  color: rgba(255, 210, 122, 0.35);
+  font-size: 14px;
+}
+.star-profile__dreams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.star-profile__dream-tag {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+  background: transparent;
+}
+
+/* Future echo card */
+.future-echo-card {
+  background: linear-gradient(135deg, rgba(12, 10, 4, 0.8), rgba(20, 16, 6, 0.9));
+  border: 1px solid rgba(255, 210, 122, 0.28);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.future-echo-card__from {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--gold-soft);
+}
+.future-echo-card__content {
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--ink);
+  line-height: 1.7;
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+}
+.future-echo-card__receive-btn {
+  align-self: flex-start;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 122, 0.45);
+  background: rgba(255, 210, 122, 0.08);
+  color: var(--gold-soft);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.future-echo-card__receive-btn:hover {
+  background: rgba(255, 210, 122, 0.15);
+  border-color: rgba(255, 210, 122, 0.7);
+}
+.future-echo-card__received {
+  font-size: 12px;
+  color: var(--gold-soft);
+  letter-spacing: 0.5px;
+}
+.future-echo-card__received--quiet {
+  opacity: 0.5;
+}
+
+.star-profile__visit {
+  align-self: flex-start;
+  padding: 11px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-soft);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.star-profile__visit:hover {
+  border-color: rgba(255, 210, 122, 0.4);
+  color: var(--gold-soft);
+}
+
+/* Echo composer section (for survivors) */
+.echo-composer-section {
+  margin-top: 28px;
+}
+.echo-composer-section__divider {
+  height: 1px;
+  background: var(--line);
+  margin-bottom: 22px;
+}
+.echo-composer-section__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.echo-composer-section__sub {
+  font-size: 13px;
+  color: var(--ink-faint);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.echo-composer-section__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 122, 0.3);
+  background: transparent;
+  color: var(--gold-soft);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.echo-composer-section__trigger:hover {
+  border-color: rgba(255, 210, 122, 0.6);
+  background: rgba(255, 210, 122, 0.05);
+}
+.echo-dot {
+  color: var(--gold-soft);
+  animation: echo-ring 2.4s ease-in-out infinite;
+}
+
+.echo-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 210, 122, 0.2);
+  background: rgba(10, 8, 2, 0.5);
+  margin-top: 10px;
+}
+.echo-composer__textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  resize: none;
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.7;
+}
+.echo-composer__textarea:focus {
+  outline: none;
+}
+.echo-composer__textarea::placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.echo-composer__story {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.echo-composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
 /* ---------- Scrollbars ---------- */
 .panel__body::-webkit-scrollbar,
 .modal::-webkit-scrollbar {

@@ -15,6 +15,7 @@ import { CreateNebulaModal } from "./ui/CreateNebulaModal";
 import { NebulaInterior } from "./three/NebulaInterior";
 import { CreateDreamModal } from "./ui/CreateDreamModal";
 import { DreamPanel } from "./ui/DreamPanel";
+import { StarsAheadPanel } from "./ui/StarsAheadPanel";
 
 export default function App() {
   const loaded = useUniverseStore((s) => s.loaded);
@@ -64,6 +65,12 @@ export default function App() {
   const nebulasCount = useUniverseStore((s) => s.nebulas).length;
   const dreamsCount = useUniverseStore((s) => s.dreams).length;
   const inNebula = overlay.kind === "nebulaInterior";
+  const hasStarsAhead = others.some((c) => c.user.isPublic && (
+    c.user.role === "survivor" ||
+    c.user.stage === "survivorship" ||
+    c.user.stage === "remission" ||
+    c.milestones.length > 0
+  ));
 
   // Auth gate: show auth screen when Supabase is configured but no session exists.
   if (authStatus === "needsAuth") {
@@ -142,6 +149,17 @@ export default function App() {
                   {population > 1 && <span className="cosmos-btn__count">{population}</span>}
                 </button>
 
+                {hasStarsAhead && (
+                  <button
+                    className="stars-ahead-btn"
+                    onClick={() => openOverlay({ kind: "starsAhead" })}
+                    title="See people who walked this path before you"
+                  >
+                    <span className="stars-ahead-btn__glyph">✨</span>
+                    Stars Ahead
+                  </button>
+                )}
+
                 {(isSurvivor || milestonesCount > 0 || user.role === "patient") && (
                   <button
                     className="milestone-hud-btn"
@@ -197,6 +215,7 @@ export default function App() {
         {overlay.kind === "dreamDetail" && (
           <DreamPanel key={overlay.dreamId} dreamId={overlay.dreamId} />
         )}
+        {overlay.kind === "starsAhead" && <StarsAheadPanel key="starsAhead" />}
       </AnimatePresence>
 
       <AnimatePresence>

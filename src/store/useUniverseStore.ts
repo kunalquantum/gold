@@ -40,7 +40,8 @@ export type Overlay =
   | { kind: "createNebula" }
   | { kind: "nebulaInterior"; nebulaId: string }
   | { kind: "createDream" }
-  | { kind: "dreamDetail"; dreamId: string };
+  | { kind: "dreamDetail"; dreamId: string }
+  | { kind: "starsAhead" };
 
 export interface NewLight {
   senderId: string;
@@ -64,6 +65,7 @@ interface UniverseState extends UniverseData {
   dreams: DreamStar[];
   fragments: DreamFragment[];
   futureLetters: FutureLetter[];
+  receivedEchoIds: string[];
 
   // Shared world
   selfId: string;
@@ -101,6 +103,10 @@ interface UniverseState extends UniverseData {
   addFutureLetter: (input: { dreamId: string; content: string; trigger: FutureLetterTrigger }) => void;
   addParticipantToDream: (dreamId: string, participantId: string) => void;
 
+  setFutureEcho: (content: string) => void;
+  setJourneyNote: (then: string, now: string) => void;
+  receiveEcho: (fromOwnerId: string) => void;
+
   openOverlay: (overlay: Overlay) => void;
   closeOverlay: () => void;
   focusPerson: (personId: string | null) => void;
@@ -112,8 +118,8 @@ interface UniverseState extends UniverseData {
 }
 
 function persist(get: () => UniverseState) {
-  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters } = get();
-  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters });
+  const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds } = get();
+  void repository.save({ user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, futureLetters, receivedEchoIds });
 }
 
 function buildLight(input: NewLight): Light {
@@ -161,6 +167,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   dreams: [],
   fragments: [],
   futureLetters: [],
+  receivedEchoIds: [],
 
   selfId: SELF,
   others: [],
@@ -179,6 +186,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
       dreams: data.dreams ?? [],
       fragments: data.fragments ?? [],
       futureLetters: data.futureLetters ?? [],
+      receivedEchoIds: data.receivedEchoIds ?? [],
       lights,
       loaded: true,
       overlay: data.user ? { kind: "none" } : { kind: "onboarding" },
@@ -397,6 +405,29 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
           : d,
       ),
     }));
+    persist(get);
+  },
+
+  setFutureEcho: (content) => {
+    set((s) => ({ user: s.user ? { ...s.user, futureEcho: content || undefined } : s.user }));
+    persist(get);
+  },
+
+  setJourneyNote: (then, now) => {
+    set((s) => ({
+      user: s.user
+        ? { ...s.user, journeyThen: then || undefined, journeyNow: now || undefined }
+        : s.user,
+    }));
+    persist(get);
+  },
+
+  receiveEcho: (fromOwnerId) => {
+    set((s) =>
+      s.receivedEchoIds.includes(fromOwnerId)
+        ? s
+        : { receivedEchoIds: [...s.receivedEchoIds, fromOwnerId] },
+    );
     persist(get);
   },
 

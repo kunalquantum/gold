@@ -188,6 +188,10 @@ export interface UniverseUser {
   role?: UserRole;
   stage?: JourneyStage;
   isPublic?: boolean;
+  // Phase 6: Stars Ahead — public profile story
+  journeyThen?: string; // brief note on where they were
+  journeyNow?: string;  // brief note on where they are now
+  futureEcho?: string;  // a message left for people behind them
 }
 
 // One person's whole presence in the shared universe — their star and the
@@ -226,6 +230,7 @@ export interface UniverseData {
   dreams: DreamStar[];
   fragments: DreamFragment[];
   futureLetters: FutureLetter[]; // private — never included in Citizen/world
+  receivedEchoIds: string[];     // ownerIds of people whose future echo was received
   messages?: LegacyMessage[];
 }
 
@@ -240,4 +245,5 @@ export const emptyUniverse = (): UniverseData => ({
   dreams: [],
   fragments: [],
   futureLetters: [],
+  receivedEchoIds: [],
 });
