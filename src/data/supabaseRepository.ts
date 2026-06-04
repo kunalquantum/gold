@@ -2,7 +2,7 @@ import type { Citizen, LightForm, LightType, UniverseData } from "../types";
 import type { UniverseRepository, WorldCallbacks } from "./repository";
 import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
-import { SUPABASE_CONFIGURED, SUPABASE_URL, WORLD_CACHE_URL, supabase } from "./supabaseClient";
+import { SUPABASE_CONFIGURED, supabase } from "./supabaseClient";
 
 // Must match WORLD_PAGE_SIZE in repository.ts.
 const PAGE_SIZE = 50;
@@ -111,29 +111,10 @@ class SupabaseRepository implements UniverseRepository {
     }
   }
 
-  // One page of the shared world via the CDN-cacheable Edge Function.
-  // Falls back to PostgREST if the function hasn't been deployed yet.
+  // One page of the shared world — always via PostgREST so we get live data
+  // with correct RLS (no CDN staleness hiding recently-joined users).
   async loadWorld(offset = 0): Promise<Citizen[]> {
     if (!supabase) return localRepository.loadWorld(offset);
-
-    // Prefer Cloudflare Worker (globally cached) over direct Edge Function call.
-    const baseUrl = WORLD_CACHE_URL ?? (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/world` : null);
-    if (baseUrl) {
-      try {
-        const fnUrl = `${baseUrl}?offset=${offset}`;
-        const resp = await fetch(fnUrl);
-        if (resp.ok) {
-          const { rows } = await resp.json() as { rows: Array<{ id: string; data: PublicRow }> };
-          return (rows ?? [])
-            .map((row) => toCitizen(row.id, row.data))
-            .filter((c): c is Citizen => c !== null);
-        }
-        // Function not deployed (404) or error (5xx) — fall through to PostgREST.
-      } catch {
-        // Network error — fall through.
-      }
-    }
-
     return this.loadWorldPostgREST(offset);
   }
 
