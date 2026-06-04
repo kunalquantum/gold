@@ -21,6 +21,7 @@ import { LibraryOfLight } from "./ui/LibraryOfLight";
 import { StargazingPanel } from "./ui/StargazingPanel";
 import { ConstellationsPanel } from "./ui/ConstellationsPanel";
 import { ReactionBar } from "./ui/ReactionBar";
+import { SendRocket } from "./ui/SendRocket";
 
 function useIsMobile() {
   return useSyncExternalStore(
@@ -156,6 +157,7 @@ export default function App() {
                 >
                   ◉ My sky
                 </button>
+                <SendRocket target={exploring} />
               </>
             ) : (
               <>
