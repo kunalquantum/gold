@@ -218,6 +218,11 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   recentreSeq: 0,
 
   load: async () => {
+    // Refresh selfId from identity — ownerId() may have changed since module
+    // init (e.g. the user just signed in for the first time in this session).
+    const currentSelfId = ownerId();
+    set({ selfId: currentSelfId, selectedCitizenId: currentSelfId });
+
     const data = await repository.load();
     const lights = applyTimeUnlocks(data.lights ?? []);
     set({
@@ -248,7 +253,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     if (!worldUnsub) {
       worldUnsub = repository.subscribeWorld({
         onUpsert: (citizen) => {
-          if (citizen.ownerId === SELF) return;
+          if (citizen.ownerId === get().selfId) return;
           set((s) => {
             const idx = s.others.findIndex((c) => c.ownerId === citizen.ownerId);
             const next = [...s.others];
@@ -258,7 +263,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
           });
         },
         onDelete: (id) => {
-          if (id === SELF) return;
+          if (id === get().selfId) return;
           set((s) => ({ others: s.others.filter((c) => c.ownerId !== id) }));
         },
         onStatus: (status) => {
@@ -286,7 +291,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
         const map = new Map(s.others.map((c) => [c.ownerId, c]));
         for (const c of orbitCitizens) {
           // Don't overwrite a citizen already loaded by loadWorld — that data is fresher.
-          if (c.ownerId !== SELF && !map.has(c.ownerId)) map.set(c.ownerId, c);
+          if (c.ownerId !== get().selfId && !map.has(c.ownerId)) map.set(c.ownerId, c);
         }
         return { others: Array.from(map.values()) };
       });
@@ -298,7 +303,8 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     // for the full world. Remaining pages are fetched in the background and
     // merged into the store as they arrive.
     const first = await repository.loadWorld(0);
-    const toOthers = (cs: typeof first) => cs.filter((c) => c.ownerId !== SELF);
+    const selfId = get().selfId;
+    const toOthers = (cs: typeof first) => cs.filter((c) => c.ownerId !== selfId);
 
     set((s) => {
       // Merge over existing so a reconnect refresh doesn't flicker.
@@ -331,10 +337,10 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   },
 
   setUser: (user) => {
-    set({
+    set((s) => ({
       user: { ...user, joinedAt: user.joinedAt ?? Date.now() },
-      selectedCitizenId: SELF,
-    });
+      selectedCitizenId: s.selfId,
+    }));
     persist(get);
   },
 
@@ -576,7 +582,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   },
 
   addSignal: (input) => {
-    const signal: Signal = { ...input, id: uid(), authorId: SELF, createdAt: Date.now() };
+    const signal: Signal = { ...input, id: uid(), authorId: get().selfId, createdAt: Date.now() };
     set((s) => ({ signals: [...s.signals, signal] }));
     persist(get);
     return signal;
@@ -616,12 +622,12 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   closeOverlay: () => set({ overlay: { kind: "none" } }),
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
-  recentre: () => set((s) => ({ selectedCitizenId: SELF, focusedPersonId: null, recentreSeq: s.recentreSeq + 1 })),
+  recentre: () => set((s) => ({ selectedCitizenId: s.selfId, focusedPersonId: null, recentreSeq: s.recentreSeq + 1 })),
 
   selfCitizen: () => {
     const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations } = get();
     if (!user?.name) return null;
-    return { ownerId: SELF, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations };
+    return { ownerId: get().selfId, user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations };
   },
 
   world: () => {
