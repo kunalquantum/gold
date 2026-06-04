@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUniverseStore } from "./store/useUniverseStore";
 import { useAuthStore } from "./data/auth";
+import { SUPABASE_CONFIGURED } from "./data/supabaseClient";
 import { AuthScreen } from "./ui/AuthScreen";
 import { UniverseScene } from "./three/UniverseScene";
 import { Onboarding } from "./ui/Onboarding";
@@ -71,6 +72,7 @@ export default function App() {
   const userEmail = useAuthStore((s) => s.userEmail);
   const initialize = useAuthStore((s) => s.initialize);
   const signOut = useAuthStore((s) => s.signOut);
+  const openAuthScreen = useAuthStore((s) => s.openAuthScreen);
 
   const [fabOpen, setFabOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -187,11 +189,14 @@ export default function App() {
                     </button>
                   </div>
                 )}
-                {authStatus === "guest" && (
+                {authStatus === "guest" && SUPABASE_CONFIGURED && (
                   <div className="hud__account">
                     <span className="hud__account-email hud__account-email--guest">
                       Guest · your universe is local only
                     </span>
+                    <button className="hud__signout" onClick={openAuthScreen}>
+                      Sign in
+                    </button>
                   </div>
                 )}
               </>

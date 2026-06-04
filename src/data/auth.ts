@@ -13,6 +13,7 @@ interface AuthState {
   signUp: (email: string, password: string) => Promise<"CHECK_EMAIL" | string | null>;
   signOut: () => Promise<void>;
   continueAsGuest: () => void;
+  openAuthScreen: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -83,5 +84,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   continueAsGuest: () => {
     localStorage.setItem("universe.guest", "true");
     set({ status: "guest" });
+  },
+
+  // Clears the guest flag so the auth screen shows. Safe to call whether the
+  // user is fully anonymous or has a local universe — their local data persists
+  // and gets pushed to Supabase on the first successful sign-in.
+  openAuthScreen: () => {
+    localStorage.removeItem("universe.guest");
+    set({ status: "needsAuth" });
   },
 }));
