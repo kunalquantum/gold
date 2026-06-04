@@ -339,6 +339,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   setUser: (user) => {
     set((s) => ({
       user: { ...user, joinedAt: user.joinedAt ?? Date.now() },
+      overlay: { kind: "none" },
       selectedCitizenId: s.selfId,
     }));
     persist(get);
@@ -440,10 +441,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   },
 
   setRoleAndStage: (updates) => {
-    set((s) => ({
-      user: s.user ? { ...s.user, ...updates } : s.user,
-      overlay: { kind: "none" },
-    }));
+    set((s) => ({ user: s.user ? { ...s.user, ...updates } : s.user }));
     persist(get);
   },
 
