@@ -1,0 +1,18 @@
+# Cloudflare Worker config for the universe_public world cache.
+#
+# Before deploying, replace the placeholder below with your real Supabase URL:
+#   SUPABASE_FUNCTION_URL = "https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/world"
+#
+# Deploy:
+#   cd cloudflare/world-cache
+#   wrangler deploy
+#
+# The Worker URL will be printed on deploy — copy it into VITE_WORLD_CACHE_URL
+# in your hosting environment.
+
+name = "gold-world-cache"
+main = "index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+SUPABASE_FUNCTION_URL = "https://YOUR_PROJECT_REF.supabase.co/functions/v1/world"

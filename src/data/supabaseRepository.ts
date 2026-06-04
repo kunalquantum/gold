@@ -2,7 +2,7 @@ import type { Citizen, LightForm, LightType, UniverseData } from "../types";
 import type { UniverseRepository, WorldCallbacks } from "./repository";
 import { localRepository } from "./localRepository";
 import { ownerId } from "./identity";
-import { SUPABASE_CONFIGURED, SUPABASE_URL, supabase } from "./supabaseClient";
+import { SUPABASE_CONFIGURED, SUPABASE_URL, WORLD_CACHE_URL, supabase } from "./supabaseClient";
 
 // Must match WORLD_PAGE_SIZE in repository.ts.
 const PAGE_SIZE = 50;
@@ -116,9 +116,11 @@ class SupabaseRepository implements UniverseRepository {
   async loadWorld(offset = 0): Promise<Citizen[]> {
     if (!supabase) return localRepository.loadWorld(offset);
 
-    if (SUPABASE_URL) {
+    // Prefer Cloudflare Worker (globally cached) over direct Edge Function call.
+    const baseUrl = WORLD_CACHE_URL ?? (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/world` : null);
+    if (baseUrl) {
       try {
-        const fnUrl = `${SUPABASE_URL}/functions/v1/world?offset=${offset}`;
+        const fnUrl = `${baseUrl}?offset=${offset}`;
         const resp = await fetch(fnUrl);
         if (resp.ok) {
           const { rows } = await resp.json() as { rows: Array<{ id: string; data: PublicRow }> };
