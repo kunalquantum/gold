@@ -11,6 +11,8 @@ import { FloatingParticles } from "./FloatingParticles";
 import { Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
 import { GivenLightBeams } from "./GivenLightBeams";
+import { AmbientComets } from "./AmbientComets";
+import { ReactionSatellites } from "./ReactionSatellites";
 import type { Citizen, Light, Person } from "../types";
 
 // ─── LOD ─────────────────────────────────────────────────────────────────────
@@ -278,6 +280,8 @@ export function UniverseScene() {
       <Starfield />
       <FloatingParticles />
       <GivenLightBeams selfId={selfId} givenLights={givenLights} />
+      <AmbientComets />
+      <ReactionSatellites />
 
       {world.map((citizen) => {
         const forced = citizen.ownerId === selectedCitizenId || citizen.ownerId === selfId;

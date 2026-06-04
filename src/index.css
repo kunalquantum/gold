@@ -3729,6 +3729,69 @@ canvas {
   background: transparent;
 }
 
+/* ─────────────────────────── Reaction bar ─────────────────────────── */
+.reaction-bar {
+  position: fixed;
+  bottom: 32px;
+  left: 32px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.reaction-bar__tray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(8, 6, 22, 0.80);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 32px;
+  padding: 10px 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.reaction-bar__emoji {
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s;
+}
+.reaction-bar__emoji:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.reaction-bar__trigger {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 6, 22, 0.80);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 20px rgba(138, 92, 255, 0.12), 0 4px 16px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.reaction-bar__trigger:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 0 28px rgba(138, 92, 255, 0.22), 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+.reaction-bar__trigger--open {
+  border-color: rgba(200, 162, 255, 0.45);
+}
+
 /* ─────────────────────────── Mobile / touch ─────────────────────────── */
 @media (max-width: 640px) {
   /* HUD: tighter padding, smaller title, hide account email to save space */

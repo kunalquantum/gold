@@ -20,6 +20,7 @@ import { LightIGivePanel } from "./ui/LightIGivePanel";
 import { LibraryOfLight } from "./ui/LibraryOfLight";
 import { StargazingPanel } from "./ui/StargazingPanel";
 import { ConstellationsPanel } from "./ui/ConstellationsPanel";
+import { ReactionBar } from "./ui/ReactionBar";
 
 function useIsMobile() {
   return useSyncExternalStore(
@@ -241,6 +242,7 @@ export default function App() {
                 </button>
               </div>
           </div>
+        <ReactionBar />
         </>
       )}
 
