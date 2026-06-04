@@ -151,23 +151,23 @@ export default function App() {
           <div className="hud__brand">
             {exploring ? (
               <>
-                <span className="hud__title">{exploring.user.name}&#8217;s universe</span>
-                <span className="hud__hint">You&#8217;re visiting · click a planet or light to explore</span>
+                <span className="hud__title">✦ Gold</span>
+                <span className="hud__hint">Visiting {exploring.user.name} · click a planet or light to explore</span>
                 <button
                   className="hud__home"
                   onClick={() => { selectCitizen(selfId); focusPerson(null); }}
                 >
-                  ◉ My sky
+                  ◉ My star
                 </button>
                 <SendRocket target={exploring} />
               </>
             ) : (
               <>
-                <span className="hud__title">{user.name}&#8217;s universe</span>
+                <span className="hud__title">✦ Gold</span>
                 <span className="hud__hint">
                   {population > 1
-                    ? `${population} souls share this sky · click any star to visit`
-                    : "Drag to look around · add someone you love"}
+                    ? `${population} souls in this galaxy · hi, ${user.name} · click any star to visit`
+                    : `Hi, ${user.name} · drag to look around · add someone you love`}
                   {syncStatus !== "offline" && (
                     <span className={`hud__sync hud__sync--${syncStatus}`}>
                       {syncStatus === "live" ? " · live" : " · syncing"}
@@ -192,7 +192,7 @@ export default function App() {
                 {authStatus === "guest" && SUPABASE_CONFIGURED && (
                   <div className="hud__account">
                     <span className="hud__account-email hud__account-email--guest">
-                      Guest · your universe is local only
+                      Guest · local only
                     </span>
                     <button className="hud__signout" onClick={openAuthScreen}>
                       Sign in

@@ -132,7 +132,8 @@ function CameraRig() {
       if (t >= releaseAt.current) return;
       const [bx, by, bz] = ownerPos(selectedCitizenId);
       target.set(bx, by, bz);
-      desired.set(bx, by + 12, bz + 34);
+      // Wide view — shows the shared galaxy, not just your own star
+      desired.set(bx, by + 38, bz + 95);
     }
 
     camera.position.lerp(desired, close ? 0.045 : 0.06);
@@ -269,7 +270,7 @@ export function UniverseScene() {
 
   return (
     <Canvas
-      camera={{ position: [0, 16, 44], fov: 55, near: 0.1, far: 4000 }}
+      camera={{ position: [0, 55, 145], fov: 55, near: 0.1, far: 4000 }}
       dpr={[1, 1.5]}
       gl={{ antialias: false, alpha: false }}
       onPointerMissed={() => focusPerson(null)}
