@@ -341,4 +341,5 @@ export const emptyUniverse = (): UniverseData => ({
   orbits: [],
   reactions: [],
   constellations: [],
+  messages: [],
 });

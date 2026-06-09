@@ -160,7 +160,7 @@ export function AuthScreen() {
 
         <button className="auth-guest" onClick={continueAsGuest}>
           Continue without an account
-          <span className="auth-guest__note">Your universe stays on this device only</span>
+          <span className="auth-guest__note">Your universe stays on this device only — you won't appear in the shared galaxy</span>
         </button>
       </motion.div>
     </div>
