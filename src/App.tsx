@@ -215,7 +215,9 @@ export default function App() {
                 {authStatus === "guest" && SUPABASE_CONFIGURED && (
                   <div className="hud__account">
                     <span className="hud__account-email hud__account-email--guest">
-                      Guest · local only
+                      {localStorage.getItem("universe.auth-id")
+                        ? "Guest · shining in the galaxy"
+                        : "Guest · local only"}
                     </span>
                     <button className="hud__signout" onClick={openAuthScreen}>
                       Sign in
