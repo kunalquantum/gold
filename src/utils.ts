@@ -443,6 +443,7 @@ export const SIGNAL_TYPE_LABELS: Record<SignalType, string> = {
   memory: "Memory",
   milestone: "Milestone",
   reflection: "Reflection",
+  hope: "Hope",
 };
 
 export const SIGNAL_TYPE_GLYPHS: Record<SignalType, string> = {
@@ -450,6 +451,7 @@ export const SIGNAL_TYPE_GLYPHS: Record<SignalType, string> = {
   memory: "◈",
   milestone: "★",
   reflection: "◎",
+  hope: "✶",
 };
 
 export const COSMIC_REACTION_LABELS: Record<CosmicReactionType, string> = {

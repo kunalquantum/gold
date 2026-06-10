@@ -3968,3 +3968,174 @@ canvas {
     bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 80px));
   }
 }
+
+/* ─── Star Map (Welcome Guide) ──────────────────────────────────────────────── */
+
+.guide {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  background: linear-gradient(180deg, rgba(18, 20, 40, 0.96), rgba(10, 11, 26, 0.97));
+  border: 1px solid rgba(200, 162, 255, 0.18);
+  border-radius: 20px;
+  padding: 36px 32px 28px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(200, 162, 255, 0.06);
+}
+
+.guide__skip {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.guide__card {
+  text-align: center;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.guide__glyph {
+  font-size: 40px;
+  color: var(--gold);
+  text-shadow: 0 0 28px var(--gold);
+  margin-bottom: 14px;
+  display: inline-block;
+}
+
+.guide__title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.guide__body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 420px;
+}
+
+.guide__hint {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--gold-soft);
+  opacity: 0.85;
+}
+
+.guide__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px 0 18px;
+}
+
+.guide__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(234, 234, 242, 0.18);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s, transform 0.25s;
+}
+
+.guide__dot--active {
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+  transform: scale(1.25);
+}
+
+.guide__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ─── The North Star ────────────────────────────────────────────────────────── */
+
+.northstar-panel {
+  max-width: 560px;
+}
+
+.northstar__halo {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+
+.northstar__core {
+  font-size: 44px;
+  color: #cfe6ff;
+  text-shadow: 0 0 30px #cfe6ff, 0 0 70px rgba(155, 184, 255, 0.7);
+  display: inline-block;
+}
+
+.northstar__intro {
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 440px;
+  margin: 10px auto 18px;
+}
+
+.northstar__beacons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.beacon {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(155, 184, 255, 0.06);
+  border: 1px solid rgba(155, 184, 255, 0.14);
+  border-radius: 14px;
+  padding: 12px 16px;
+  position: relative;
+}
+
+.beacon--mine {
+  border-color: rgba(255, 210, 122, 0.35);
+  background: rgba(255, 210, 122, 0.06);
+}
+
+.beacon__flame {
+  color: #cfe6ff;
+  text-shadow: 0 0 12px #cfe6ff;
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.beacon--mine .beacon__flame {
+  color: var(--gold);
+  text-shadow: 0 0 12px var(--gold);
+}
+
+.beacon__text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.beacon__mine-tag {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 10.5px;
+  color: var(--gold-soft);
+  opacity: 0.8;
+}

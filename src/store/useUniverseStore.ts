@@ -57,7 +57,9 @@ export type Overlay =
   | { kind: "lightIGive" }
   | { kind: "libraryOfLight" }
   | { kind: "stargazing" }
-  | { kind: "constellations" };
+  | { kind: "constellations" }
+  | { kind: "guide" }
+  | { kind: "northStar" };
 
 export interface NewLight {
   senderId: string;

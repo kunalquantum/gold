@@ -23,6 +23,8 @@ import { StargazingPanel } from "./ui/StargazingPanel";
 import { ConstellationsPanel } from "./ui/ConstellationsPanel";
 import { ReactionBar } from "./ui/ReactionBar";
 import { SendRocket } from "./ui/SendRocket";
+import { WelcomeGuide, GUIDE_SEEN_KEY } from "./ui/WelcomeGuide";
+import { NorthStarPanel } from "./ui/NorthStarPanel";
 
 function useIsMobile() {
   return useSyncExternalStore(
@@ -88,6 +90,19 @@ export default function App() {
     }
   }, [authStatus, load]);
 
+  // First visit after onboarding: open the Star Map tour once so new users
+  // learn what exists before they explore.
+  useEffect(() => {
+    if (
+      loaded &&
+      user &&
+      overlay.kind === "none" &&
+      localStorage.getItem(GUIDE_SEEN_KEY) !== "true"
+    ) {
+      openOverlay({ kind: "guide" });
+    }
+  }, [loaded, user, overlay.kind, openOverlay]);
+
   const atHome = selectedCitizenId === selfId;
   const population = others.length + (user?.name ? 1 : 0);
 
@@ -127,7 +142,9 @@ export default function App() {
     items.push({ key: "nebula", icon: "☁", label: nebulasCount > 0 ? `${nebulasCount} nebula${nebulasCount === 1 ? "" : "s"}` : "New memory", action: () => openOverlay({ kind: "createNebula" }) });
     items.push({ key: "dream", icon: "✦", label: dreamsCount > 0 ? `${dreamsCount} dream${dreamsCount === 1 ? "" : "s"}` : "New dream", action: () => openOverlay({ kind: "createDream" }) });
     items.push({ key: "stargazing", icon: "✨", label: "Stargazing", action: () => openOverlay({ kind: "stargazing" }) });
+    items.push({ key: "northStar", icon: "✶", label: "North Star", accent: "purple", action: () => openOverlay({ kind: "northStar" }) });
     items.push({ key: "constellations", icon: "✦", label: "Constellations", action: () => openOverlay({ kind: "constellations" }) });
+    items.push({ key: "guide", icon: "?", label: "Star Map — how this works", action: () => openOverlay({ kind: "guide" }) });
     items.push({ key: "add", icon: "+", label: "Add someone", accent: "gold", action: () => openOverlay({ kind: "addPerson" }) });
     return items;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,6 +292,8 @@ export default function App() {
         {overlay.kind === "libraryOfLight" && <LibraryOfLight key="libraryOfLight" />}
         {overlay.kind === "stargazing" && <StargazingPanel key="stargazing" />}
         {overlay.kind === "constellations" && <ConstellationsPanel key="constellations" />}
+        {overlay.kind === "guide" && <WelcomeGuide key="guide" />}
+        {overlay.kind === "northStar" && <NorthStarPanel key="northStar" />}
       </AnimatePresence>
 
       <AnimatePresence>

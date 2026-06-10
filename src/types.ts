@@ -97,7 +97,7 @@ export interface FutureLetter {
 
 // ─── Phase 8: Shared Universe ────────────────────────────────────────────────
 
-export type SignalType = "dream" | "memory" | "milestone" | "reflection";
+export type SignalType = "dream" | "memory" | "milestone" | "reflection" | "hope";
 export type SignalVisibility = "public" | "constellation" | "orbiters";
 export type CosmicReactionType = "light" | "relate" | "inspired" | "thanks";
 

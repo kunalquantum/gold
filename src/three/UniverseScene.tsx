@@ -14,6 +14,7 @@ import { GivenLightBeams } from "./GivenLightBeams";
 import { AmbientComets } from "./AmbientComets";
 import { ReactionSatellites } from "./ReactionSatellites";
 import { RocketLayer } from "./RocketLayer";
+import { NorthStar } from "./NorthStar";
 import type { Citizen, Light, Person } from "../types";
 
 // ─── LOD ─────────────────────────────────────────────────────────────────────
@@ -268,6 +269,17 @@ export function UniverseScene() {
   // LOD map — updated inside Canvas by LODManager every 30 frames.
   const [lodMap, setLodMap] = useState<ReadonlyMap<string, LODLevel>>(() => new Map());
 
+  // Galaxy-wide hope: every public "hope" beacon from every citizen feeds the
+  // North Star's brightness — a single shared signal of collective hope.
+  const hopeCount = useMemo(
+    () => world.reduce((n, c) => n + c.signals.filter((s) => s.type === "hope").length, 0),
+    [world],
+  );
+
+  const handleOpenNorthStar = useCallback(() => {
+    openOverlay({ kind: "northStar" });
+  }, [openOverlay]);
+
   return (
     <Canvas
       camera={{ position: [0, 55, 145], fov: 55, near: 0.1, far: 4000 }}
@@ -285,6 +297,7 @@ export function UniverseScene() {
       <AmbientComets />
       <ReactionSatellites />
       <RocketLayer />
+      <NorthStar hopeCount={hopeCount} onOpen={handleOpenNorthStar} />
 
       {world.map((citizen) => {
         const forced = citizen.ownerId === selectedCitizenId || citizen.ownerId === selfId;
