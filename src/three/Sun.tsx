@@ -57,8 +57,12 @@ export function Sun({ color, size = 2.1 }: { color: string; size?: number }) {
 
 const CORE_VERT = /* glsl */ `
 varying vec3 vPos;
+varying vec3 vWNormal;
+varying vec3 vWPos;
 void main(){
   vPos = position;
+  vWNormal = mat3(modelMatrix) * normal;
+  vWPos = (modelMatrix * vec4(position, 1.0)).xyz;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
@@ -67,6 +71,8 @@ const CORE_FRAG = /* glsl */ `
 uniform float uTime;
 uniform vec3 uColor;
 varying vec3 vPos;
+varying vec3 vWNormal;
+varying vec3 vWPos;
 ${NOISE_GLSL}
 void main(){
   vec3 p = normalize(vPos);
@@ -82,6 +88,12 @@ void main(){
   vec3 col = mix(deep, mid, smoothstep(0.2, 0.55, heat));
   col = mix(col, hot, smoothstep(0.55, 0.92, heat));
   col += hot * pow(max(heat, 0.0), 3.0) * 0.5; // bright granules
+
+  // Limb darkening — real stars dim toward the edge of the disc. The corona
+  // shell takes over right where this rolls off.
+  float mu = clamp(dot(normalize(vWNormal), normalize(cameraPosition - vWPos)), 0.0, 1.0);
+  col *= 0.5 + 0.5 * pow(mu, 0.55);
+
   gl_FragColor = vec4(col, 1.0);
 }
 `;

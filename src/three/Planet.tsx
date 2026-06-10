@@ -38,6 +38,7 @@ export function Planet({
       uType: { value: TYPE_INDEX[type] },
       uSeed: { value: seed },
       uStarPos: { value: star },
+      uTime: { value: 0 },
     }),
     [baseColor, accentColor, type, seed, star],
   );
@@ -50,8 +51,9 @@ export function Planet({
     [atmoColor, star],
   );
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (body.current) body.current.rotation.y += delta * 0.06;
+    uniforms.uTime.value = state.clock.elapsedTime;
   });
 
   return (
@@ -100,6 +102,7 @@ uniform vec3 uAccent;
 uniform float uType;
 uniform float uSeed;
 uniform vec3 uStarPos;
+uniform float uTime;
 varying vec3 vPos;
 varying vec3 vWNormal;
 varying vec3 vWPos;
@@ -109,32 +112,53 @@ void main(){
   vec3 sp = p * 1.8 + uSeed;
   float n = fbm(sp);
 
+  vec3 N = normalize(vWNormal);
+  vec3 L = normalize(uStarPos - vWPos);
+  vec3 V = normalize(cameraPosition - vWPos);
+  float diff = clamp(dot(N, L), 0.0, 1.0);
+
   vec3 col;
   if(uType < 0.5){
-    // Gas giant — latitude bands warped by turbulence.
+    // Gas giant — latitude bands warped by turbulence, plus one great storm.
     float bands = sin((p.y * 7.0 + n * 1.4) * 3.14159);
     col = mix(uColor, uAccent, smoothstep(0.3, 0.7, bands * 0.5 + 0.5));
     col += vec3(0.05) * fbm(sp * 3.0);
+    vec3 stormDir = normalize(vec3(sin(uSeed), 0.22, cos(uSeed)));
+    float storm = smoothstep(0.32, 0.05, distance(p, stormDir));
+    float swirl = fbm(p * 9.0 + uSeed * 2.0 + vec3(uTime * 0.02));
+    col = mix(col, mix(uAccent, vec3(1.0, 0.92, 0.8), 0.35), storm * (0.55 + 0.35 * swirl));
   } else if(uType < 1.5){
-    // Rocky — continents and seas.
+    // Rocky — continents and seas, drifting clouds, polar caps, ocean glint.
     float land = smoothstep(0.0, 0.22, n);
     col = mix(uColor * 0.65, uAccent, land);
     col += fbm(sp * 4.5) * 0.12;
+    // Polar ice caps, edges roughened by the same terrain noise.
+    float cap = smoothstep(0.74, 0.88, abs(p.y) + n * 0.08);
+    col = mix(col, vec3(0.93, 0.96, 1.0), cap);
+    // Sun glinting off open water.
+    float spec = pow(max(dot(reflect(-L, N), V), 0.0), 48.0);
+    col += vec3(1.0, 0.95, 0.85) * spec * (1.0 - land) * (1.0 - cap) * diff * 0.6;
+    // Cloud layer slowly drifting over everything.
+    float cl = fbm(p * 3.4 + uSeed + vec3(uTime * 0.012, 0.0, uTime * 0.009));
+    float clouds = smoothstep(0.16, 0.6, cl);
+    col = mix(col, vec3(0.98), clouds * 0.55);
   } else {
-    // Icy — bright fractured crust.
+    // Icy — bright fractured crust with cold blue depths in the cracks.
     float cr = fbm(sp * 3.2);
     col = mix(uColor, vec3(0.92, 0.96, 1.0), smoothstep(0.1, 0.6, cr));
+    float crack = smoothstep(0.45, 0.2, abs(fbm(sp * 6.5)));
+    col = mix(col, uColor * 0.55, crack * 0.5);
   }
 
   // Lit by this system's own star → a real terminator.
-  vec3 N = normalize(vWNormal);
-  vec3 L = normalize(uStarPos - vWPos);
-  float diff = clamp(dot(N, L), 0.0, 1.0);
   float light = 0.10 + 0.95 * diff;
   col *= light;
 
+  // Warm scatter right along the day/night line — sunsets, seen from space.
+  float term = smoothstep(0.0, 0.16, diff) * (1.0 - smoothstep(0.16, 0.45, diff));
+  col += mix(uAccent, vec3(1.0, 0.55, 0.3), 0.5) * term * 0.18;
+
   // Atmospheric scatter brightening the lit edge.
-  vec3 V = normalize(cameraPosition - vWPos);
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   col += uAccent * fres * diff * 0.5;
 

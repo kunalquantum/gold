@@ -12,6 +12,8 @@ export function Nebula() {
       uTime: { value: 0 },
       uColorA: { value: new THREE.Color("#3a1d6e") }, // violet
       uColorB: { value: new THREE.Color("#13294b") }, // midnight blue
+      uColorC: { value: new THREE.Color("#5e2447") }, // dusty rose
+      uColorD: { value: new THREE.Color("#caa470") }, // galactic dust amber
     }),
     [],
   );
@@ -48,6 +50,8 @@ const NEBULA_FRAG = /* glsl */ `
 uniform float uTime;
 uniform vec3 uColorA;
 uniform vec3 uColorB;
+uniform vec3 uColorC;
+uniform vec3 uColorD;
 varying vec3 vPos;
 ${NOISE_GLSL}
 void main(){
@@ -57,8 +61,18 @@ void main(){
   float veins = fbm(p * 5.0 - vec3(uTime * 0.015));
   vec3 col = mix(uColorB, uColorA, clouds);
   col += uColorA * pow(max(veins, 0.0), 2.0) * 0.3;
+  // A second hue region so the sky isn't one uniform violet wash.
+  float warm = fbm(p * 1.4 + vec3(7.3, 0.0, 2.1));
+  col = mix(col, uColorC, smoothstep(0.25, 0.75, warm) * 0.45);
+
+  // Faint dust haze along the Milky Way plane (matches the band of stars).
+  vec3 bandNormal = normalize(vec3(sin(0.28), cos(0.42) * cos(0.28), -sin(0.42)));
+  float band = exp(-pow(dot(p, bandNormal) * 4.2, 2.0));
+  float bandDust = fbm(p * 3.4 + vec3(3.0));
+  col += uColorD * band * (0.35 + 0.4 * max(bandDust, 0.0)) * 0.22;
+
   // Fade so it's only a whisper of colour.
-  float a = clouds * 0.16 + 0.02;
+  float a = clouds * 0.16 + band * 0.06 + 0.02;
   gl_FragColor = vec4(col, a);
 }
 `;

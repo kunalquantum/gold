@@ -8,7 +8,7 @@ import { useUniverseStore } from "../store/useUniverseStore";
 import { galaxyPosition, lightOrbit, lightPosition, orbitPosition } from "../utils";
 import { System } from "./System";
 import { FloatingParticles } from "./FloatingParticles";
-import { Starfield } from "./Starfield";
+import { MilkyWay, Starfield } from "./Starfield";
 import { Nebula } from "./Nebula";
 import { GivenLightBeams } from "./GivenLightBeams";
 import { AmbientComets } from "./AmbientComets";
@@ -292,6 +292,7 @@ export function UniverseScene() {
       <ambientLight intensity={0.08} />
       <Nebula />
       <Starfield />
+      <MilkyWay />
       <FloatingParticles />
       <GivenLightBeams selfId={selfId} givenLights={givenLights} />
       <AmbientComets />
