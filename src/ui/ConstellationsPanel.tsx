@@ -1,6 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useUniverseStore } from "../store/useUniverseStore";
+import { useAuthStore } from "../data/auth";
 import { CONSTELLATION_LABELS, CONSTELLATION_GLYPHS, CONSTELLATION_DESCRIPTIONS } from "../utils";
+import { loadConstellationLinks, setConstellationLink, type ConstellationLinks } from "../data/constellationLinksRepository";
 import type { ConstellationId } from "../types";
 
 const CONSTELLATION_IDS: ConstellationId[] = [
@@ -13,13 +16,49 @@ export function ConstellationsPanel() {
   const openOverlay = useUniverseStore((s) => s.openOverlay);
   const myConstellations = useUniverseStore((s) => s.constellations);
   const others = useUniverseStore((s) => s.others);
+  const user = useUniverseStore((s) => s.user);
   const joinConstellation = useUniverseStore((s) => s.joinConstellation);
   const leaveConstellation = useUniverseStore((s) => s.leaveConstellation);
+  const selfId = useUniverseStore((s) => s.selfId);
+  const authStatus = useAuthStore((s) => s.status);
+
+  const [expanded, setExpanded] = useState<ConstellationId | null>(null);
+  const [links, setLinks] = useState<ConstellationLinks>({});
+  const [linkInput, setLinkInput] = useState("");
+  const [editingLink, setEditingLink] = useState(false);
+
+  useEffect(() => {
+    void loadConstellationLinks().then(setLinks);
+  }, []);
+
+  function membersOf(id: ConstellationId) {
+    const others_ = others
+      .filter((c) => c.constellations.includes(id))
+      .map((c) => ({ ownerId: c.ownerId, name: c.user.name, color: c.user.color }));
+    const mine = myConstellations.includes(id) && user
+      ? [{ ownerId: selfId, name: user.name, color: user.color }]
+      : [];
+    return [...mine, ...others_];
+  }
 
   function memberCount(id: ConstellationId) {
-    const othersIn = others.filter((c) => c.constellations.includes(id)).length;
-    const selfIn = myConstellations.includes(id) ? 1 : 0;
-    return othersIn + selfIn;
+    return membersOf(id).length;
+  }
+
+  function toggleExpand(id: ConstellationId) {
+    setExpanded((cur) => (cur === id ? null : id));
+    setEditingLink(false);
+    setLinkInput(links[id] ?? "");
+  }
+
+  async function saveLink(id: ConstellationId) {
+    const url = linkInput.trim();
+    if (!url) return;
+    const ok = await setConstellationLink(id, url, selfId);
+    if (ok) {
+      setLinks((prev) => ({ ...prev, [id]: url }));
+      setEditingLink(false);
+    }
   }
 
   return (
@@ -53,11 +92,14 @@ export function ConstellationsPanel() {
           <div className="constellation-grid">
             {CONSTELLATION_IDS.map((id, i) => {
               const joined = myConstellations.includes(id);
-              const count = memberCount(id);
+              const members = membersOf(id);
+              const count = members.length;
+              const isExpanded = expanded === id;
+              const groupLink = links[id];
               return (
                 <motion.div
                   key={id}
-                  className={`constellation-card${joined ? " constellation-card--joined" : ""}`}
+                  className={`constellation-card${joined ? " constellation-card--joined" : ""}${isExpanded ? " constellation-card--expanded" : ""}`}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.35 }}
@@ -65,6 +107,22 @@ export function ConstellationsPanel() {
                   <span className="constellation-card__glyph">{CONSTELLATION_GLYPHS[id]}</span>
                   <span className="constellation-card__label">{CONSTELLATION_LABELS[id]}</span>
                   <span className="constellation-card__desc">{CONSTELLATION_DESCRIPTIONS[id]}</span>
+
+                  {/* Member roster */}
+                  {count > 0 && (
+                    <div className="constellation-card__roster">
+                      {members.slice(0, 8).map((m) => (
+                        <span
+                          key={m.ownerId}
+                          className="constellation-card__avatar"
+                          style={{ background: m.color, boxShadow: `0 0 8px ${m.color}88` }}
+                          title={m.name}
+                        />
+                      ))}
+                      {count > 8 && <span className="constellation-card__more">+{count - 8}</span>}
+                    </div>
+                  )}
+
                   <div className="constellation-card__footer">
                     <span className="constellation-card__count">
                       {count === 0 ? "Be the first" : count === 1 ? "1 soul" : `${count} souls`}
@@ -76,6 +134,42 @@ export function ConstellationsPanel() {
                       {joined ? "Leave" : "Join"}
                     </button>
                   </div>
+
+                  {joined && (
+                    <button className="constellation-card__toggle" onClick={() => toggleExpand(id)}>
+                      {isExpanded ? "Hide group ▲" : "WhatsApp group ▼"}
+                    </button>
+                  )}
+
+                  {isExpanded && (
+                    <div className="constellation-card__group">
+                      {groupLink ? (
+                        <a className="btn btn--primary btn--block" href={groupLink} target="_blank" rel="noreferrer">
+                          💬 Open {CONSTELLATION_LABELS[id]} WhatsApp group
+                        </a>
+                      ) : authStatus === "authenticated" ? (
+                        editingLink ? (
+                          <div className="constellation-card__link-form">
+                            <input
+                              className="field__input"
+                              placeholder="https://chat.whatsapp.com/..."
+                              value={linkInput}
+                              onChange={(e) => setLinkInput(e.target.value)}
+                            />
+                            <button className="btn--small" onClick={() => void saveLink(id)} disabled={!linkInput.trim()}>
+                              Share link
+                            </button>
+                          </div>
+                        ) : (
+                          <button className="btn--ghost" onClick={() => setEditingLink(true)}>
+                            + Add a WhatsApp group link for {CONSTELLATION_LABELS[id]}
+                          </button>
+                        )
+                      ) : (
+                        <p className="constellation-card__no-link">No group link yet — sign in to add one.</p>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               );
             })}

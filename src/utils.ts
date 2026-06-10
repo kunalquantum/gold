@@ -478,3 +478,29 @@ export function formatDate(value?: string | number): string {
     day: "numeric",
   });
 }
+
+// ─── Phase 9: Light Bridge ────────────────────────────────────────────────────
+
+// Strips everything but digits, dropping a leading 00 (international prefix
+// written as 00) since wa.me expects a bare country code + number.
+export function normalizeWhatsapp(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  return digits.startsWith("00") ? digits.slice(2) : digits;
+}
+
+export function isValidWhatsapp(raw: string): boolean {
+  const digits = normalizeWhatsapp(raw);
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+// A warm, ready-to-send introduction — both sides see the same text so the
+// first WhatsApp message never feels like a cold open.
+export function craftIntroMessage(opts: { fromName: string; toName: string; note?: string }): string {
+  const { fromName, toName, note } = opts;
+  const base = `Hi ${toName} — it's ${fromName} 🌌 We connected through Gold.`;
+  return note?.trim() ? `${base} ${note.trim()}` : `${base} Glad to be in touch.`;
+}
+
+export function whatsappLink(phone: string, message: string): string {
+  return `https://wa.me/${normalizeWhatsapp(phone)}?text=${encodeURIComponent(message)}`;
+}

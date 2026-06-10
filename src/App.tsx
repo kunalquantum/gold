@@ -25,6 +25,8 @@ import { ReactionBar } from "./ui/ReactionBar";
 import { SendRocket } from "./ui/SendRocket";
 import { WelcomeGuide, GUIDE_SEEN_KEY } from "./ui/WelcomeGuide";
 import { NorthStarPanel } from "./ui/NorthStarPanel";
+import { LightBridgePanel } from "./ui/LightBridgePanel";
+import { ConnectButton } from "./ui/ConnectButton";
 
 function useIsMobile() {
   return useSyncExternalStore(
@@ -69,6 +71,7 @@ export default function App() {
   const focusPerson = useUniverseStore((s) => s.focusPerson);
   const recentre = useUniverseStore((s) => s.recentre);
   const syncStatus = useUniverseStore((s) => s.syncStatus);
+  const connections = useUniverseStore((s) => s.connections);
 
   const authStatus = useAuthStore((s) => s.status);
   const userEmail = useAuthStore((s) => s.userEmail);
@@ -126,6 +129,7 @@ export default function App() {
     c.user.stage === "remission" ||
     c.milestones.length > 0
   ));
+  const pendingRequests = connections.filter((c) => c.toId === selfId && c.status === "pending").length;
 
   const fabItems = useMemo(() => {
     if (!user) return [];
@@ -143,12 +147,13 @@ export default function App() {
     items.push({ key: "dream", icon: "✦", label: dreamsCount > 0 ? `${dreamsCount} dream${dreamsCount === 1 ? "" : "s"}` : "New dream", action: () => openOverlay({ kind: "createDream" }) });
     items.push({ key: "stargazing", icon: "✨", label: "Stargazing", action: () => openOverlay({ kind: "stargazing" }) });
     items.push({ key: "northStar", icon: "✶", label: "North Star", accent: "purple", action: () => openOverlay({ kind: "northStar" }) });
+    items.push({ key: "lightBridge", icon: "🌉", label: "Light Bridge", badge: pendingRequests > 0 ? pendingRequests : undefined, action: () => openOverlay({ kind: "lightBridge" }) });
     items.push({ key: "constellations", icon: "✦", label: "Constellations", action: () => openOverlay({ kind: "constellations" }) });
     items.push({ key: "guide", icon: "?", label: "Star Map — how this works", action: () => openOverlay({ kind: "guide" }) });
     items.push({ key: "add", icon: "+", label: "Add someone", accent: "gold", action: () => openOverlay({ kind: "addPerson" }) });
     return items;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, hasWaitingLight, population, hasStarsAhead, isSurvivor, milestonesCount, nebulasCount, dreamsCount]);
+  }, [user, hasWaitingLight, population, hasStarsAhead, isSurvivor, milestonesCount, nebulasCount, dreamsCount, pendingRequests]);
 
   // Auth gate: show auth screen when Supabase is configured but no session exists.
   if (authStatus === "needsAuth") {
@@ -177,6 +182,7 @@ export default function App() {
                   ◉ My star
                 </button>
                 <SendRocket target={exploring} />
+                <ConnectButton target={exploring} />
               </>
             ) : (
               <>
@@ -294,6 +300,7 @@ export default function App() {
         {overlay.kind === "constellations" && <ConstellationsPanel key="constellations" />}
         {overlay.kind === "guide" && <WelcomeGuide key="guide" />}
         {overlay.kind === "northStar" && <NorthStarPanel key="northStar" />}
+        {overlay.kind === "lightBridge" && <LightBridgePanel key="lightBridge" />}
       </AnimatePresence>
 
       <AnimatePresence>

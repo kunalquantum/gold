@@ -137,6 +137,29 @@ export interface CosmicReaction {
   createdAt: number;
 }
 
+// ─── Phase 9: Light Bridge ───────────────────────────────────────────────────
+// A consensual bridge between two citizens. Lives in its own Supabase table
+// (not in UniverseData) since both parties read and write the same row.
+
+export type ConnectionStatus = "pending" | "accepted" | "declined";
+
+export interface Connection {
+  id: string;
+  fromId: string;
+  toId: string;
+  status: ConnectionStatus;
+  fromName: string;
+  fromColor: string;
+  toName: string;
+  fromMessage: string;
+  // Set by each owner only after `status` becomes "accepted" — never exposed
+  // to the other side before mutual consent.
+  fromWhatsapp?: string;
+  toWhatsapp?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // ─── Phase 7: Light I Give ────────────────────────────────────────────────────
 // The moment a person discovers they can contribute — giving light to those
 // still finding their way. Not because they are experts. Because they are human.
@@ -272,6 +295,9 @@ export interface UniverseUser {
   futureEcho?: string;
   // Phase 7: Light I Give — opt in to receive light from community
   openToLight?: boolean;
+  // Phase 9: Light Bridge — private. Only ever sent to Supabase after a
+  // connection is mutually accepted, never included in universe_public.
+  whatsapp?: string;
 }
 
 // One person's whole presence in the shared universe — their star and the

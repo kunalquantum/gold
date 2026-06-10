@@ -4139,3 +4139,193 @@ canvas {
   color: var(--gold-soft);
   opacity: 0.8;
 }
+
+/* ─────────────────────────── Connect button (Light Bridge) ─────────────────────────── */
+.connect-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(139, 232, 216, 0.30);
+  background: rgba(8, 6, 22, 0.70);
+  color: rgba(139, 232, 216, 0.90);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.connect-btn:hover {
+  border-color: rgba(139, 232, 216, 0.55);
+  background: rgba(139, 232, 216, 0.08);
+}
+.connect-btn--active {
+  border-color: rgba(255, 210, 122, 0.40);
+  color: var(--gold-soft);
+}
+.connect-btn--pending {
+  border-color: rgba(200, 162, 255, 0.35);
+  color: var(--purple);
+  cursor: default;
+}
+
+.connect-tray {
+  width: 230px;
+}
+.connect-tray__note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  margin: 0 4px 8px;
+}
+
+/* ─────────────────────────── Light Bridge panel ─────────────────────────── */
+.light-bridge-panel {
+  max-width: 600px;
+}
+.light-bridge__phone {
+  margin-bottom: 4px;
+}
+.light-bridge__phone-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  margin: 4px 0 12px;
+}
+.light-bridge__phone-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.light-bridge__phone-row .field__input {
+  flex: 1;
+}
+
+.bridge-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 10px;
+}
+.bridge-card--pending {
+  border-style: dashed;
+  opacity: 0.85;
+}
+.bridge-card--active {
+  border-color: rgba(139, 232, 216, 0.18);
+  background: rgba(139, 232, 216, 0.02);
+}
+.bridge-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bridge-card__star {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bridge-card__name {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink);
+  flex: 1;
+}
+.bridge-card__badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(139, 232, 216, 0.85);
+}
+.bridge-card__message {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0;
+}
+.bridge-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+.bridge-card__actions .btn {
+  width: auto;
+  flex: 1;
+}
+.bridge-card__waiting {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin: 0;
+}
+.bridge-card__whatsapp {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+
+/* ─────────────────────────── Constellation roster & WhatsApp groups ─────────────────────────── */
+.constellation-card--expanded {
+  background: rgba(200, 162, 255, 0.05);
+}
+.constellation-card__roster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.constellation-card__avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.constellation-card__more {
+  font-size: 10px;
+  color: var(--ink-faint);
+  align-self: center;
+  letter-spacing: 0.3px;
+}
+.constellation-card__toggle {
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  padding: 2px 0;
+  text-align: left;
+  transition: color 0.2s;
+}
+.constellation-card__toggle:hover {
+  color: var(--purple);
+}
+.constellation-card__group {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.constellation-card__group .btn {
+  width: 100%;
+}
+.constellation-card__link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.constellation-card__link-form .btn--small {
+  width: 100%;
+}
+.constellation-card__no-link {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-style: italic;
+  margin: 0;
+}

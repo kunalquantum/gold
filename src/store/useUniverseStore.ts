@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type {
   Citizen,
+  Connection,
   ConstellationId,
   CosmicReaction,
   CosmicReactionType,
@@ -33,6 +34,14 @@ import { SELF_ID, emptyUniverse } from "../types";
 import { repository, WORLD_PAGE_SIZE } from "../data/repository";
 import type { SyncStatus } from "../data/repository";
 import { ownerId } from "../data/identity";
+import { useAuthStore } from "../data/auth";
+import {
+  loadConnections as loadConnectionsApi,
+  respondToConnection,
+  sendConnectionRequest as sendConnectionRequestApi,
+  shareWhatsapp,
+  subscribeConnections,
+} from "../data/connectionsRepository";
 import {
   lightColor,
   lightForm,
@@ -59,7 +68,8 @@ export type Overlay =
   | { kind: "stargazing" }
   | { kind: "constellations" }
   | { kind: "guide" }
-  | { kind: "northStar" };
+  | { kind: "northStar" }
+  | { kind: "lightBridge" };
 
 export interface NewLight {
   senderId: string;
@@ -98,9 +108,13 @@ interface UniverseState extends UniverseData {
   syncStatus: SyncStatus; // real-time channel health
   recentreSeq: number;   // incremented by recentre() to force a camera fly-back
 
+  // Phase 9: Light Bridge
+  connections: Connection[];
+
   load: () => Promise<void>;
   recentre: () => void;
   loadWorld: () => Promise<void>;
+  loadConnections: () => Promise<void>;
   setUser: (user: UniverseUser) => void;
 
   addPerson: (input: { name: string; relationship: string; photo?: string }) => Person;
@@ -150,6 +164,12 @@ interface UniverseState extends UniverseData {
   focusPerson: (personId: string | null) => void;
   selectCitizen: (ownerId: string) => void;
 
+  // Phase 9: Light Bridge
+  setWhatsapp: (whatsapp: string) => void;
+  requestConnection: (target: Citizen, message: string) => Promise<void>;
+  acceptConnection: (id: string) => Promise<void>;
+  declineConnection: (id: string) => Promise<void>;
+
   // Derived
   world: () => Citizen[]; // self (live) + others
   selfCitizen: () => Citizen | null;
@@ -191,6 +211,7 @@ function applyTimeUnlocks(lights: Light[]): Light[] {
 }
 
 let worldUnsub: (() => void) | null = null;
+let connectionsUnsub: (() => void) | null = null;
 
 export const useUniverseStore = create<UniverseState>((set, get) => ({
   ...emptyUniverse(),
@@ -218,6 +239,7 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   selectedCitizenId: SELF,
   syncStatus: "connecting" as SyncStatus,
   recentreSeq: 0,
+  connections: [],
 
   load: async () => {
     // Refresh selfId from identity — ownerId() may have changed since module
@@ -297,6 +319,62 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
         }
         return { others: Array.from(map.values()) };
       });
+    }
+
+    // Light Bridge requires Supabase Auth — guests stay local-only, same as
+    // the rest of the shared world.
+    if (useAuthStore.getState().status === "authenticated") {
+      void get().loadConnections();
+      if (!connectionsUnsub) {
+        connectionsUnsub = subscribeConnections(currentSelfId, {
+          onUpsert: (connection) => {
+            set((s) => {
+              const idx = s.connections.findIndex((c) => c.id === connection.id);
+              const next = [...s.connections];
+              if (idx >= 0) next[idx] = connection; else next.unshift(connection);
+              return { connections: next };
+            });
+            // The original requester completes the mutual reveal once they
+            // see the other side accepted.
+            const self = get().selfId;
+            const myWhatsapp = get().user?.whatsapp;
+            if (
+              connection.status === "accepted" &&
+              myWhatsapp &&
+              connection.fromId === self &&
+              !connection.fromWhatsapp
+            ) {
+              void shareWhatsapp(connection.id, myWhatsapp, "from").then((updated) => {
+                if (updated) {
+                  set((s) => ({
+                    connections: s.connections.map((c) => (c.id === updated.id ? updated : c)),
+                  }));
+                }
+              });
+            }
+          },
+        });
+      }
+    }
+  },
+
+  loadConnections: async () => {
+    const list = await loadConnectionsApi(get().selfId);
+    set({ connections: list });
+
+    // Catch up on any reveals that happened while we were offline.
+    const self = get().selfId;
+    const myWhatsapp = get().user?.whatsapp;
+    if (!myWhatsapp) return;
+    for (const c of list) {
+      if (c.status !== "accepted") continue;
+      if (c.fromId === self && !c.fromWhatsapp) {
+        const updated = await shareWhatsapp(c.id, myWhatsapp, "from");
+        if (updated) set((s) => ({ connections: s.connections.map((x) => (x.id === updated.id ? updated : x)) }));
+      } else if (c.toId === self && !c.toWhatsapp) {
+        const updated = await shareWhatsapp(c.id, myWhatsapp, "to");
+        if (updated) set((s) => ({ connections: s.connections.map((x) => (x.id === updated.id ? updated : x)) }));
+      }
     }
   },
 
@@ -623,6 +701,37 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
   focusPerson: (personId) => set({ focusedPersonId: personId }),
   selectCitizen: (id) => set({ selectedCitizenId: id, focusedPersonId: null }),
   recentre: () => set((s) => ({ selectedCitizenId: s.selfId, focusedPersonId: null, recentreSeq: s.recentreSeq + 1 })),
+
+  setWhatsapp: (whatsapp) => {
+    set((s) => ({ user: s.user ? { ...s.user, whatsapp: whatsapp || undefined } : s.user }));
+    persist(get);
+  },
+
+  requestConnection: async (target, message) => {
+    const { user, selfId } = get();
+    if (!user?.name) return;
+    if (get().connections.some((c) => c.toId === target.ownerId || c.fromId === target.ownerId)) return;
+    const connection = await sendConnectionRequestApi({
+      fromId: selfId,
+      toId: target.ownerId,
+      fromName: user.name,
+      fromColor: user.color ?? "#ffd27a",
+      toName: target.user.name,
+      fromMessage: message.trim(),
+    });
+    if (connection) set((s) => ({ connections: [connection, ...s.connections] }));
+  },
+
+  acceptConnection: async (id) => {
+    const myWhatsapp = get().user?.whatsapp;
+    const updated = await respondToConnection(id, "accepted", myWhatsapp);
+    if (updated) set((s) => ({ connections: s.connections.map((c) => (c.id === id ? updated : c)) }));
+  },
+
+  declineConnection: async (id) => {
+    const updated = await respondToConnection(id, "declined");
+    if (updated) set((s) => ({ connections: s.connections.map((c) => (c.id === id ? updated : c)) }));
+  },
 
   selfCitizen: () => {
     const { user, people, lights, memories, milestones, nebulas, artifacts, dreams, fragments, wisdom, signals, constellations } = get();

@@ -55,6 +55,12 @@ const STEPS: GuideStep[] = [
     hint: "Click any distant star to fly to it",
   },
   {
+    glyph: "🌉",
+    title: "Light Bridge — when a connection feels real.",
+    body: "Sometimes a conversation here wants to continue elsewhere. Visit someone's star and tap “Connect” to send a quiet request. Only if they accept too do your WhatsApp numbers appear — with a warm, ready-to-send message. Nothing is shared unless both sides agree.",
+    hint: "Open “Light Bridge” from the orb menu anytime",
+  },
+  {
     glyph: "🚀",
     title: "Ready for launch.",
     body: "There are no follower counts here. No likes, no metrics, no noise. Just people, light, and time. Start by adding someone you love — your sky is waiting.",
