@@ -129,11 +129,22 @@ class SupabaseRepository implements UniverseRepository {
         .order("id",         { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
       if (error) throw error;
-      return (data ?? [])
+
+      const rawCount = data?.length ?? 0;
+      const citizens = (data ?? [])
         .map((row) => toCitizen(row.id as string, row.data as PublicRow))
         .filter((c): c is Citizen => c !== null);
+
+      // Diagnostic — visible in DevTools so we can confirm RLS / row counts in
+      // production. Tag is searchable; keep until shared-galaxy issues settle.
+      console.info(
+        `[Universe] loadWorld(offset=${offset}): ${rawCount} rows from PostgREST → ${citizens.length} named citizens`,
+        { selfId: this.id, ids: (data ?? []).map((r) => r.id) },
+      );
+
+      return citizens;
     } catch (err) {
-      console.warn("Universe: could not load the shared world", err);
+      console.warn("[Universe] loadWorld failed", err);
       return offset === 0 ? localRepository.loadWorld() : [];
     }
   }
