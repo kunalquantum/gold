@@ -43,13 +43,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
+    // Legacy sticky-guest flag — guest is now a per-visit choice, not a
+    // permanent preference. Clear so returning visitors see the auth screen
+    // instead of being silently locked into local-only mode.
+    localStorage.removeItem("universe.guest");
+
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       applySession(set, session.user);
     } else {
-      // If the user previously chose guest mode, respect that choice.
-      const isGuest = localStorage.getItem("universe.guest") === "true";
-      set({ status: isGuest ? "guest" : "needsAuth" });
+      // No live session = show the auth screen. From there the user can sign
+      // in, sign up, or pick guest mode for this visit only.
+      set({ status: "needsAuth" });
     }
 
     // Stay in sync as Supabase fires auth events (token refresh, sign-out, etc.)
@@ -106,15 +111,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     if (supabase) await supabase.auth.signOut();
     clearAuthUserId();
-    localStorage.removeItem("universe.guest");
     set({ status: "needsAuth", userEmail: null });
   },
 
   // Guests get a real (anonymous) Supabase identity when possible, so their
   // star appears in the shared galaxy like everyone else's. If anonymous
   // sign-ins are disabled or we're offline, fall back to device-only mode.
+  // Guest mode is *per-visit* — no localStorage flag — so a refresh always
+  // brings them back to the auth screen, where they can choose to sign in
+  // properly and have their universe sync across devices.
   continueAsGuest: async () => {
-    localStorage.setItem("universe.guest", "true");
     if (supabase) {
       try {
         const { data, error } = await supabase.auth.signInAnonymously();
@@ -133,11 +139,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ status: "guest" });
   },
 
-  // Clears the guest flag so the auth screen shows. Safe to call whether the
-  // user is fully anonymous or has a local universe — their local data persists
-  // and gets pushed to Supabase on the first successful sign-in.
+  // Surfaces the auth screen from inside a guest session. Local data is
+  // preserved and gets pushed to Supabase on the first successful sign-in.
   openAuthScreen: () => {
-    localStorage.removeItem("universe.guest");
     set({ status: "needsAuth" });
   },
 }));
