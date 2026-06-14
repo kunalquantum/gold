@@ -49,10 +49,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem("universe.guest");
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
+    if (session?.user && !session.user.is_anonymous) {
       applySession(set, session.user);
     } else {
-      // No live session = show the auth screen. From there the user can sign
+      if (session?.user?.is_anonymous) {
+        // A leftover anonymous session from a previous "Continue without an
+        // account" visit. Anonymous sessions persist in localStorage just
+        // like real ones — without this, every reload would silently
+        // restore guest mode and skip the auth screen forever.
+        await supabase.auth.signOut();
+        clearAuthUserId();
+      }
+      // No real session = show the auth screen. From there the user can sign
       // in, sign up, or pick guest mode for this visit only.
       set({ status: "needsAuth" });
     }
