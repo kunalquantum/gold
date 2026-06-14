@@ -11,8 +11,25 @@ interface AuthState {
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (email: string, password: string) => Promise<"CHECK_EMAIL" | string | null>;
+  signInWithGoogle: () => Promise<string | null>;
   signOut: () => Promise<void>;
-  continueAsGuest: () => void;
+  continueAsGuest: () => Promise<void>;
+  openAuthScreen: () => void;
+}
+
+// Maps a Supabase session to app status. Anonymous sessions are "guest" in the
+// UI (no Light Bridge etc.) but still carry a real auth.uid() — which is what
+// lets a guest's star pass RLS and appear in the shared galaxy.
+function applySession(
+  set: (s: Partial<AuthState>) => void,
+  user: { id: string; email?: string | null; is_anonymous?: boolean },
+) {
+  setAuthUserId(user.id);
+  if (user.is_anonymous) {
+    set({ status: "guest", userEmail: null });
+  } else {
+    set({ status: "authenticated", userEmail: user.email ?? null });
+  }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -26,21 +43,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
+    // Legacy sticky-guest flag — guest is now a per-visit choice, not a
+    // permanent preference. Clear so returning visitors see the auth screen
+    // instead of being silently locked into local-only mode.
+    localStorage.removeItem("universe.guest");
+
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setAuthUserId(session.user.id);
-      set({ status: "authenticated", userEmail: session.user.email ?? null });
+      applySession(set, session.user);
     } else {
-      // If the user previously chose guest mode, respect that choice.
-      const isGuest = localStorage.getItem("universe.guest") === "true";
-      set({ status: isGuest ? "guest" : "needsAuth" });
+      // No live session = show the auth screen. From there the user can sign
+      // in, sign up, or pick guest mode for this visit only.
+      set({ status: "needsAuth" });
     }
 
     // Stay in sync as Supabase fires auth events (token refresh, sign-out, etc.)
     supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setAuthUserId(session.user.id);
-        set({ status: "authenticated", userEmail: session.user.email ?? null });
+        applySession(set, session.user);
       } else if (get().status !== "guest") {
         // Only switch to needsAuth if the user didn't explicitly choose guest.
         clearAuthUserId();
@@ -73,15 +93,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return null; // onAuthStateChange fires and updates status
   },
 
+  // One-tap entry. Redirects to Google and back; onAuthStateChange picks up
+  // the session when the browser returns.
+  signInWithGoogle: async () => {
+    if (!supabase) return "No connection available.";
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (!error) return null; // browser is navigating away
+    if (error.message.toLowerCase().includes("provider")) {
+      return "Google sign-in isn't enabled yet — use email for now.";
+    }
+    return "Something didn't connect. Check your signal and try again.";
+  },
+
   signOut: async () => {
     if (supabase) await supabase.auth.signOut();
     clearAuthUserId();
-    localStorage.removeItem("universe.guest");
     set({ status: "needsAuth", userEmail: null });
   },
 
-  continueAsGuest: () => {
-    localStorage.setItem("universe.guest", "true");
+  // Guests get a real (anonymous) Supabase identity when possible, so their
+  // star appears in the shared galaxy like everyone else's. If anonymous
+  // sign-ins are disabled or we're offline, fall back to device-only mode.
+  // Guest mode is *per-visit* — no localStorage flag — so a refresh always
+  // brings them back to the auth screen, where they can choose to sign in
+  // properly and have their universe sync across devices.
+  continueAsGuest: async () => {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (!error && data.session?.user) {
+          // onAuthStateChange also fires, but set state now so entry is instant.
+          applySession(set, data.session.user);
+          return;
+        }
+        if (error) {
+          console.warn("Universe: anonymous sign-in unavailable — guest stays local-only", error.message);
+        }
+      } catch (err) {
+        console.warn("Universe: anonymous sign-in failed — guest stays local-only", err);
+      }
+    }
     set({ status: "guest" });
+  },
+
+  // Surfaces the auth screen from inside a guest session. Local data is
+  // preserved and gets pushed to Supabase on the first successful sign-in.
+  openAuthScreen: () => {
+    set({ status: "needsAuth" });
   },
 }));
