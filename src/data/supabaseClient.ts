@@ -23,3 +23,19 @@ export const supabase: SupabaseClient | null = SUPABASE_CONFIGURED
       },
     })
   : null;
+
+// Surface the config state at boot so a deploy with missing env vars is
+// obvious from the console instead of silently dropping every user into
+// local-only guest mode.
+if (typeof window !== "undefined") {
+  if (SUPABASE_CONFIGURED) {
+    console.info(`[Universe] Supabase configured — cloud sync active. URL=${url}`);
+  } else {
+    console.warn(
+      "[Universe] Supabase NOT configured — running in local-only mode. " +
+      "Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your hosting " +
+      "environment (e.g. Vercel → Project Settings → Environment Variables) " +
+      "and redeploy.",
+    );
+  }
+}
