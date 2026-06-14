@@ -306,10 +306,16 @@ export const useUniverseStore = create<UniverseState>((set, get) => ({
     const selfId = get().selfId;
     const toOthers = (cs: typeof first) => cs.filter((c) => c.ownerId !== selfId);
 
+    const others = toOthers(first);
+    console.info(
+      `[Universe] store: ${first.length} citizens from loadWorld → ${others.length} others (selfId=${selfId})`,
+      { allIds: first.map((c) => c.ownerId), otherIds: others.map((c) => c.ownerId) },
+    );
+
     set((s) => {
       // Merge over existing so a reconnect refresh doesn't flicker.
       const map = new Map(s.others.map((c) => [c.ownerId, c]));
-      for (const c of toOthers(first)) map.set(c.ownerId, c);
+      for (const c of others) map.set(c.ownerId, c);
       return { others: Array.from(map.values()) };
     });
 
